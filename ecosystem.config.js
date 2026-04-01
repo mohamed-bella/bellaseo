@@ -6,7 +6,7 @@ module.exports = {
       cwd: './backend',
       env: {
         NODE_ENV: 'production',
-        PORT: 4000
+        PORT: 4004
       },
       instances: 1,
       exec_mode: 'fork'
@@ -18,7 +18,7 @@ module.exports = {
       cwd: './frontend',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3004
       }
     }
   ]
