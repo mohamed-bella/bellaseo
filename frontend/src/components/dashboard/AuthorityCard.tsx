@@ -115,43 +115,41 @@ export default function AuthorityCard() {
   }
 
   return (
-    <div className="bg-card rounded-xl p-8 border border-border space-y-8">
+    <div className="bg-card rounded-xl p-4 sm:p-8 border border-border space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center text-primary">
-            <Brain className="w-6 h-6" />
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-primary/20 flex items-center justify-center text-primary">
+            <Brain className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-foreground">E-E-A-T Engine</h3>
-            <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-black">Expertise · Trust · Authority</p>
+            <h3 className="text-lg sm:text-xl font-black text-foreground">E-E-A-T Engine</h3>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black leading-none">Trust & Authority</p>
           </div>
         </div>
 
         {/* Authority Score */}
-        <div className="flex flex-col items-center">
-          <div className="text-3xl font-black text-primary">{authorityScore}</div>
-          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Authority Score</span>
+        <div className="flex flex-row xs:flex-col items-center gap-3 xs:gap-0 justify-between xs:justify-center p-3 xs:p-0 rounded-xl bg-primary/5 xs:bg-transparent border border-primary/10 xs:border-none">
+          <div className="text-2xl sm:text-3xl font-black text-primary">{authorityScore}</div>
+          <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Global Score</span>
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 rounded-xl border border-border bg-muted/30">
-          <div className="flex items-center gap-3 mb-2">
-            <Search className="w-4 h-4 text-primary" />
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Live Citations</span>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-muted/30">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+            <Search className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Citations</span>
           </div>
-          <p className="text-3xl font-black text-foreground">{metrics.totalCitations}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">Sourced from current news & studies</p>
+          <p className="text-xl sm:text-3xl font-black text-foreground">{metrics.totalCitations}</p>
         </div>
-        <div className="p-4 rounded-xl border border-border bg-muted/30">
-          <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Schema Power</span>
+        <div className="p-3 sm:p-4 rounded-xl border border-border bg-muted/30">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Schema</span>
           </div>
-          <p className="text-3xl font-black text-foreground">{metrics.schemaInjected}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">JSON-LD entities injected</p>
+          <p className="text-xl sm:text-3xl font-black text-foreground">{metrics.schemaInjected}</p>
         </div>
       </div>
 
@@ -161,9 +159,9 @@ export default function AuthorityCard() {
           <Zap className="w-3.5 h-3.5 text-primary" /> Cross-Platform Fragments
         </h4>
         <div className="grid grid-cols-3 gap-3">
-          <PlatformBadge icon={<Link2 className="w-4 h-4" />} label="LinkedIn" value={metrics.linkedInFragments} />
-          <PlatformBadge icon={<AtSign className="w-4 h-4" />} label="Twitter" value={metrics.twitterFragments} />
-          <PlatformBadge icon={<MessageSquare className="w-4 h-4" />} label="Reddit" value={metrics.redditFragments} />
+          <PlatformBadge icon={<Link2 className="w-4 h-4" />} label="LN" value={metrics.linkedInFragments} />
+          <PlatformBadge icon={<AtSign className="w-4 h-4" />} label="X" value={metrics.twitterFragments} />
+          <PlatformBadge icon={<MessageSquare className="w-4 h-4" />} label="RD" value={metrics.redditFragments} />
         </div>
       </div>
 
@@ -190,10 +188,10 @@ export default function AuthorityCard() {
 
 function PlatformBadge({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card">
-      <div className="text-primary mb-2">{icon}</div>
-      <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
-      <span className="text-xl font-black text-foreground">{value}</span>
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 rounded-xl border border-border bg-card">
+      <div className="text-primary mb-1 sm:mb-2">{icon}</div>
+      <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
+      <span className="text-lg sm:text-xl font-black text-foreground">{value}</span>
     </div>
   );
 }

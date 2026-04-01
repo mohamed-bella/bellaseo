@@ -133,7 +133,7 @@ body {
 }
 
 @utility card-premium {
-  @apply bg-card rounded-2xl p-6 border border-border relative overflow-hidden;
+  @apply bg-card rounded-2xl p-4 sm:p-6 border border-border relative overflow-hidden;
   /* Removed hover transforms and shadows as per user request */
   
   &:hover {
@@ -142,7 +142,7 @@ body {
 }
 
 @utility btn-primary {
-  @apply relative inline-flex items-center justify-center bg-primary text-primary-foreground font-semibold rounded-lg px-6 py-3 transition-opacity duration-200 ease-in-out;
+  @apply relative inline-flex items-center justify-center bg-primary text-primary-foreground font-semibold rounded-lg px-4 sm:px-6 py-2 sm:py-3 transition-opacity duration-200 ease-in-out text-sm sm:text-base;
   @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
   @apply hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
 }

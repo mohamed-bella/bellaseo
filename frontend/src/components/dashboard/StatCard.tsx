@@ -30,9 +30,9 @@ export default function StatCard({
   className 
 }: StatCardProps) {
   return (
-    <div className={cn("bg-card rounded-xl p-6 border border-border flex flex-col justify-between h-full", className)}>
+    <div className={cn("bg-card rounded-xl p-4 sm:p-6 border border-border flex flex-col justify-between h-full", className)}>
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2 sm:mb-4">
           <div className="text-primary">
             <Icon className="w-6 h-6" />
           </div>
@@ -50,12 +50,12 @@ export default function StatCard({
           {isLoading ? (
             <LoadingSpinner size={24} />
           ) : (
-            <h3 className="text-3xl font-bold text-foreground tracking-tight">{value}</h3>
+            <h3 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">{value}</h3>
           )}
         </div>
       </div>
       {description && (
-        <p className="text-[12px] text-muted-foreground mt-4 leading-relaxed">{description}</p>
+        <p className="text-[11px] sm:text-[12px] text-muted-foreground mt-2 sm:mt-4 leading-relaxed">{description}</p>
       )}
     </div>
   );

@@ -60,9 +60,7 @@ export default function Header() {
 
       {/* Actions */}
       <div className="flex items-center gap-2 md:gap-4 shrink-0 ml-auto">
-        <div className="hidden sm:block">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
         
         <button 
           onClick={() => setHasNotifications(false)}

@@ -84,38 +84,37 @@ export default function NextScheduleCard({ campaigns }: { campaigns: Campaign[] 
     <div className="card-premium grainy bg-gradient-to-br from-primary/10 via-transparent to-transparent border-primary/20 overflow-hidden relative group">
        {/* Abstract BG Decor */}
        <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/20 rounded-full blur-[60px] pointer-events-none" />
-       
-       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
-                <Zap className="w-6 h-6 text-white" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 relative z-10">
+          <div className="flex items-start gap-3 sm:gap-4">
+             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 shrink-0">
+                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
              </div>
-             <div>
-                <h3 className="text-xl font-black text-foreground tracking-tight">
-                  Next Campaign Run
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Scheduler posting will start at <span className="text-foreground font-bold">{nextRun.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> for <span className="text-primary font-black">{nextRun.campaign.name}</span>.
-                </p>
-             </div>
+              <div>
+                 <h3 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
+                   Next Run
+                 </h3>
+                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                   Starting at <span className="text-foreground font-bold">{nextRun.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> for <span className="text-primary font-black uppercase text-[11px]">{nextRun.campaign.name}</span>.
+                 </p>
+              </div>
           </div>
 
-          <div className="flex items-center gap-6">
-             <div className="text-right">
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1 opacity-60">Starts In</p>
-                <div className="flex items-center gap-2">
-                   <Clock className="w-4 h-4 text-primary animate-pulse" />
-                   <span className="text-2xl font-black text-foreground font-mono tabular-nums">{timeLeft}</span>
+          <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto mt-2 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 border-border/50">
+             <div className="text-left sm:text-right">
+                <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-0.5 opacity-60">Starts In</p>
+                <div className="flex items-center gap-1.5">
+                   <Clock className="w-3.5 h-3.5 text-primary animate-pulse" />
+                   <span className="text-xl sm:text-2xl font-black text-foreground font-mono tabular-nums">{timeLeft}</span>
                 </div>
              </div>
              
-             <div className="h-10 w-px bg-border hidden md:block" />
+             <div className="h-8 w-px bg-border hidden sm:block" />
 
-             <button className="h-12 px-6 rounded-2xl bg-primary text-white font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95">
-               Details <ArrowRight className="w-4 h-4" />
+             <button className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl bg-primary text-white font-black uppercase text-[9px] sm:text-[10px] tracking-widest flex items-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95">
+               Details <ArrowRight className="w-3.5 h-3.5" />
              </button>
           </div>
-       </div>
+        </div>
     </div>
   );
 }

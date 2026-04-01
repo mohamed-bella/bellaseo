@@ -12,6 +12,8 @@ import {
   History,
   Zap,
   Activity,
+  FolderPlus,
+  Search,
 } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
@@ -152,6 +154,46 @@ export default function DashboardPage() {
             Quick Launch
           </Link>
         </div>
+      </div>
+
+      {/* Mobile-Only Quick Actions */}
+      <div className="grid grid-cols-2 gap-4 px-6 sm:hidden pb-2">
+        <Link 
+          href="/campaigns" 
+          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-primary/10 border border-primary/20 text-primary shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-3">
+            <FolderPlus className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest">New Project</span>
+        </Link>
+        <Link 
+          href="/keyword-research" 
+          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-3">
+            <Search className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Research</span>
+        </Link>
+        <Link 
+          href="/sites" 
+          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
+            <Globe className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Add Site</span>
+        </Link>
+        <Link 
+          href="/content-lab" 
+          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 shadow-sm active:scale-95 transition-transform"
+        >
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
+            <Zap className="w-5 h-5" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">AI Lab</span>
+        </Link>
       </div>
 
       {/* Onboarding */}
