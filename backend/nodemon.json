@@ -1,0 +1,15 @@
+{
+  "verbose": false,
+  "ignore": [
+    ".git",
+    "node_modules/**/node_modules",
+    ".baileys_session/*",
+    "*.log",
+    "error_debug.log"
+  ],
+  "events": {
+    "restart": "echo 'Nodemon restared. (Ignored session changes)'"
+  },
+  "watch": ["src/"],
+  "ext": "js,json"
+}

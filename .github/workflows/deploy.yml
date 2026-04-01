@@ -1,0 +1,37 @@
+name: Deploy to Hetzner Server
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 77.42.43.52
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /root/bellaseo
+            # Pull latest changes from git
+            git fetch --all
+            git reset --hard origin/main
+            
+            # Install dependencies
+            npm install
+            cd backend && npm install
+            cd ../frontend && npm install
+            
+            # Build frontend
+            npm run build
+            
+            # Restart PM2
+            cd ..
+            pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
+            pm2 save
