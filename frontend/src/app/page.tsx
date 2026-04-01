@@ -88,6 +88,47 @@ export default function DashboardPage() {
     };
   }, [fetchDashboardData]);
 
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh] relative overflow-hidden">
+        {/* Abstract Background Accents */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col items-center">
+            {/* Logo Spinner Hybrid */}
+            <div className="relative mb-10">
+                <div className="w-24 h-24 rounded-full border-[3px] border-primary/10 border-t-primary animate-[spin_1.5s_linear_infinite]" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <ShieldCheck className="w-10 h-10 text-primary/80" />
+                </div>
+            </div>
+
+            {/* Loading text with animated dots */}
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-black text-foreground tracking-tight animate-pulse">Initializing Engine</h2>
+              <div className="flex gap-1.5 justify-center">
+                  {[0, 1, 2].map((i) => (
+                    <div 
+                      key={i} 
+                      className="w-1.5 h-1.5 rounded-full bg-primary" 
+                      style={{ animation: `bounce 1s infinite ${i * 0.2}s` }}
+                    />
+                  ))}
+              </div>
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] opacity-40 pt-4">Connecting to Authority Clusters</p>
+            </div>
+        </div>
+
+        <style jsx>{`
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); opacity: 0.3; }
+            50% { transform: translateY(-4px); opacity: 1; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 space-y-10">
       {/* Header */}
