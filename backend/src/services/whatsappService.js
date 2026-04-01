@@ -58,9 +58,22 @@ async function initWhatsApp(io = null) {
   intentionalStop = false;
 
   try {
-    if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
-
-    const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
+    let auth;
+    try {
+      if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
+      auth = await useMultiFileAuthState(SESSION_DIR);
+    } catch (authErr) {
+      console.error('[WhatsApp] Auth state initialization failed:', authErr.message);
+      // If folder exists but is corrupted/missing files, try one reset
+      if (fs.existsSync(SESSION_DIR)) {
+        console.log('[WhatsApp] Attempting session directory reset...');
+        _clearSessionFiles();
+        auth = await useMultiFileAuthState(SESSION_DIR);
+      } else {
+        throw authErr;
+      }
+    }
+    const { state, saveCreds } = auth;
     
     // Stable version fetching with fallback - Using latest confirmed web version
     let version = [2, 3000, 1036420555];
