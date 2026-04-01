@@ -47,11 +47,11 @@ function formatDate(iso: string) {
 
 const STATUS_STYLING: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   draft: { label: 'Draft', bg: 'bg-secondary', text: 'text-muted-foreground', dot: 'bg-muted-foreground' },
-  review: { label: 'Review', bg: 'bg-amber-500/10', text: 'text-amber-500', dot: 'bg-amber-500' },
+  review: { label: 'Review', bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-500', dot: 'bg-amber-500' },
   approved: { label: 'Approved', bg: 'bg-primary/10', text: 'text-primary', dot: 'bg-primary' },
-  published: { label: 'Live', bg: 'bg-emerald-500/10', text: 'text-emerald-500', dot: 'bg-emerald-500' },
-  rejected: { label: 'Rejected', bg: 'bg-rose-500/10', text: 'text-rose-500', dot: 'bg-rose-500' },
-  failed: { label: 'Failed', bg: 'bg-rose-500/10', text: 'text-rose-500', dot: 'bg-rose-500' },
+  published: { label: 'Live', bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-500', dot: 'bg-emerald-500' },
+  rejected: { label: 'Rejected', bg: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-500', dot: 'bg-rose-500' },
+  failed: { label: 'Failed', bg: 'bg-rose-500/10', text: 'text-rose-600 dark:text-rose-500', dot: 'bg-rose-500' },
 };
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -162,10 +162,10 @@ export default function ArticlesPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-foreground tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
+          <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
             Content Library
           </h1>
-          <p className="text-muted-foreground mt-1 text-lg">Manage, review, and bulk-publish your AI-generated articles.</p>
+          <p className="text-muted-foreground mt-1 text-base sm:text-lg">Manage, review, and bulk-publish your AI-generated articles.</p>
         </div>
       </div>
 
@@ -237,8 +237,8 @@ export default function ArticlesPage() {
       )}
 
       {/* MAIN DATA TABLE */}
-      <div className="bg-transparent border-t border-border overflow-hidden mt-6">
-        <div className="overflow-x-auto">
+      <div className="bg-transparent border-t border-border mt-6 overflow-x-auto custom-scrollbar">
+        <div className="w-full min-w-[1000px]">
           <table className="w-full text-left text-sm border-separate border-spacing-0">
             <thead>
               <tr className="bg-secondary/50">
@@ -248,7 +248,7 @@ export default function ArticlesPage() {
                    </button>
                 </th>
                 <th className="p-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Article Title & Project</th>
-                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Metrics</th>
+                <th className="p-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Metrics</th>
                 <th className="p-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
                 <th className="p-5 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
               </tr>
@@ -312,17 +312,24 @@ export default function ArticlesPage() {
                        </div>
                     </td>
                     <td className="p-5 text-right">
-                       <div className="flex items-center justify-end gap-2">
+                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
                           {art.status === 'published' && art.published_url && (
-                             <a href={art.published_url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-xl bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all">
+                             <a 
+                               href={art.published_url} 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               className="p-2 rounded-xl bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2"
+                             >
                                 <ExternalLink className="w-4 h-4" />
+                                <span className="sm:hidden text-[10px] font-black uppercase">View Live</span>
                              </a>
                           )}
                           <button 
                             onClick={() => { setSelectedArticle(art); setIsModalOpen(true); }}
-                            className="p-2 rounded-xl bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all"
+                            className="p-2 rounded-xl bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2"
                           >
                              <Eye className="w-4 h-4" />
+                             <span className="sm:hidden text-[10px] font-black uppercase">Review</span>
                           </button>
                        </div>
                     </td>
