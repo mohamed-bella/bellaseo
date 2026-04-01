@@ -74,11 +74,11 @@ const navGroups = [
   {
     label: 'System & Org',
     items: [
-      { name: 'Integrations', icon: FcGlobe, href: '/sites', themeColor: 'cyan', adminOnly: true },
-      { name: 'Authority Builder', icon: FcApproval, href: '/eeat', themeColor: 'teal', adminOnly: true },
-      { name: 'Article Studio', icon: FcTemplate, href: '/article-config', themeColor: 'purple', adminOnly: true },
-      { name: 'Notifications', icon: FcAlarmClock, href: '/notifications', themeColor: 'pink', adminOnly: true },
-      { name: 'Team', icon: FcBusinessman, href: '/team', themeColor: 'blue', adminOnly: true },
+      { name: 'Integrations', icon: FcGlobe, href: '/sites', themeColor: 'cyan' },
+      { name: 'Authority Builder', icon: FcApproval, href: '/eeat', themeColor: 'teal' },
+      { name: 'Article Studio', icon: FcTemplate, href: '/article-config', themeColor: 'purple' },
+      { name: 'Notifications', icon: FcAlarmClock, href: '/notifications', themeColor: 'pink' },
+      { name: 'Team', icon: FcBusinessman, href: '/team', themeColor: 'blue' },
       { name: 'Settings', icon: FcSettings, href: '/settings', themeColor: 'slate' },
     ]
   }
@@ -90,7 +90,11 @@ const STEPS = [
   { label: 'Add topics & generate', href: '/keywords' },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  dynamicBranding?: any;
+}
+
+export default function Sidebar({ dynamicBranding }: SidebarProps) {
   const pathname = usePathname();
   const { isSidebarOpen, setSidebarOpen } = useAppStore();
   const [role, setRole] = useState<'admin' | 'editor'>('admin');
@@ -111,7 +115,10 @@ export default function Sidebar() {
   }, [setSidebarOpen, pathname]); // Run on mount and on navigation
 
   // No need for a flat visibleNavItems array, as we map over groups
-  const DynamicIcon = (LucideIcons as any)[BRANDING?.logo?.iconName || 'TrendingUp'] || TrendingUp;
+  const brandName = dynamicBranding?.name || BRANDING.name;
+  const companyName = dynamicBranding?.companyName || BRANDING.companyName;
+  const iconName = dynamicBranding?.iconName || BRANDING?.logo?.iconName || 'TrendingUp';
+  const DynamicIcon = (LucideIcons as any)[iconName] || TrendingUp;
 
   return (
     <>
@@ -137,10 +144,10 @@ export default function Sidebar() {
         {isSidebarOpen && (
           <div className="animate-in fade-in duration-300 ease-out-quart">
             <span className="font-bold text-lg tracking-tight text-foreground block leading-none">
-              {BRANDING.name}
+              {brandName}
             </span>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-1 block">
-              {BRANDING.companyName}
+              {companyName}
             </span>
           </div>
         )}
@@ -149,7 +156,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 md:px-4 py-2 space-y-2 custom-scrollbar">
         {navGroups.map((group) => {
-          const groupVisibleItems = group.items.filter(item => role === 'admin' || !(item as any).adminOnly);
+          const groupVisibleItems = group.items;
           if (groupVisibleItems.length === 0) return null;
           
           return (
@@ -204,8 +211,8 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Quick-start guide strip (only when sidebar is open and admin) */}
-      {isSidebarOpen && role === 'admin' && (
+      {/* Quick-start guide strip (only when sidebar is open) */}
+      {isSidebarOpen && (
         <div className="shrink-0 mx-3 mb-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
           <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-2.5 flex items-center gap-1.5">
             <Zap className="w-3 h-3" /> Getting Started

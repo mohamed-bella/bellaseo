@@ -400,9 +400,9 @@ export default function CampaignsPage() {
                             : <Play className="w-4 h-4 text-emerald-500" />}
                         </Button>
 
-                        {/* Edit */}
-                        <Button variant="ghost" size="icon" onClick={() => openModal(c)} title="Edit project settings" className="h-9 w-9">
-                          <Edit className="w-4 h-4 text-muted-foreground hover:text-white" />
+                        {/* Edit: Redirect to Studio */}
+                        <Button variant="ghost" size="icon" onClick={() => window.location.href = `/campaigns/${c.id}/edit`} title="Open Project Studio" className="h-9 w-9">
+                          <Edit className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
                         </Button>
 
                         {/* Delete */}
@@ -425,11 +425,10 @@ export default function CampaignsPage() {
         </table>
       </div>
 
-      {/* Create / Edit Project Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={editingCampaign ? `Edit Project: ${editingCampaign.name}` : 'Create New Project'}
+        title="Create New Project"
       >
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto px-1 custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
