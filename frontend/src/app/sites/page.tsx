@@ -165,14 +165,14 @@ export default function SitesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black text-foreground tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
+          <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
             Connected Sites
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Manage your WordPress and Blogger publishing destinations.</p>
+          <p className="text-muted-foreground mt-2 text-base sm:text-lg">Manage your WordPress and Blogger publishing destinations.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 shadow-lg shadow-primary/20">
+        <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center">
           <Plus className="w-4 h-4" />
           Add Site
         </Button>
@@ -311,9 +311,9 @@ export default function SitesPage() {
                     </span>
                   </div>
                   <div className="glass rounded-3xl border border-border overflow-hidden">
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                      <table className="w-full text-left text-sm border-separate border-spacing-0">
-                        <thead className="sticky top-0 bg-secondary/80 backdrop-blur-md z-10 border-b border-border">
+                    <div className="max-h-[400px] overflow-x-auto overflow-y-auto custom-scrollbar">
+                      <table className="w-full text-left text-sm border-separate border-spacing-0 min-w-[500px]">
+                        <thead className="sticky top-0 bg-secondary backdrop-blur-md z-10 border-b border-border text-foreground">
                           <tr>
                             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Plugin Name</th>
                             <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Version</th>

@@ -11,7 +11,7 @@ const STATUS_COLORS: Record<string, string> = {
   active: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
   paused: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
   completed: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-  archived: 'text-muted-foreground bg-white/5 border-white/5',
+  archived: 'text-muted-foreground bg-secondary border-border',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -249,10 +249,10 @@ export default function CampaignsPage() {
           >
             Import from JSON
           </Button>
-          <Button onClick={() => openModal()} className="flex items-center gap-2 text-sm font-bold">
-            <Plus className="w-4 h-4" />
-            Create New Project
-          </Button>
+        <Button onClick={() => openModal()} className="flex items-center gap-2 text-sm font-bold w-full sm:w-auto">
+          <Plus className="w-4 h-4" />
+          New Project
+        </Button>
         </div>
       </div>
 
@@ -316,8 +316,8 @@ export default function CampaignsPage() {
       </div>
 
       {/* Projects Table */}
-      <div className="bg-transparent border-t border-border overflow-hidden mt-6">
-        <table className="w-full text-left">
+      <div className="bg-transparent border-t border-border mt-6 overflow-x-auto custom-scrollbar">
+        <table className="w-full text-left min-w-[800px]">
           <thead className="bg-secondary/30 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
             <tr>
               <th className="px-6 py-4">Project Name</th>
@@ -370,47 +370,52 @@ export default function CampaignsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       
                       {/* Main CTA: Open Hub */}
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex items-center gap-1.5 text-xs font-bold text-primary border-primary/30 group-hover:bg-primary/10 transition-colors"
+                        className="flex items-center justify-center gap-1.5 text-xs font-bold text-primary border-primary/30 group-hover:bg-primary/10 transition-colors w-full sm:w-auto"
                         onClick={() => window.location.href = `/campaigns/${c.id}`}
                       >
-                        Open Workspace <Rocket className="w-3.5 h-3.5 ml-1" />
+                        <span className="hidden sm:inline">Open Workspace</span>
+                        <span className="sm:hidden">Workspace</span>
+                        <Rocket className="w-3.5 h-3.5 ml-1" />
                       </Button>
 
-                      <div className="w-px h-6 bg-border mx-1" />
+                      <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
 
-                      {/* Pause / Resume */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={c.status === 'active' ? 'Pause auto-posting' : 'Resume auto-posting'}
-                        onClick={() => handleToggleStatus(c.id, c.status)}
-                      >
-                        {c.status === 'active'
-                          ? <Pause className="w-4 h-4 text-amber-500" />
-                          : <Play className="w-4 h-4 text-emerald-500" />}
-                      </Button>
+                      <div className="flex items-center gap-2 justify-end">
+                        {/* Pause / Resume */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={c.status === 'active' ? 'Pause auto-posting' : 'Resume auto-posting'}
+                          onClick={() => handleToggleStatus(c.id, c.status)}
+                          className="h-9 w-9"
+                        >
+                          {c.status === 'active'
+                            ? <Pause className="w-4 h-4 text-amber-500" />
+                            : <Play className="w-4 h-4 text-emerald-500" />}
+                        </Button>
 
-                      {/* Edit */}
-                      <Button variant="ghost" size="icon" onClick={() => openModal(c)} title="Edit project settings">
-                        <Edit className="w-4 h-4 text-muted-foreground hover:text-white" />
-                      </Button>
+                        {/* Edit */}
+                        <Button variant="ghost" size="icon" onClick={() => openModal(c)} title="Edit project settings" className="h-9 w-9">
+                          <Edit className="w-4 h-4 text-muted-foreground hover:text-white" />
+                        </Button>
 
-                      {/* Delete */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-rose-500 hover:text-rose-400 group/del"
-                        onClick={() => handleDelete(c.id, c.name)}
-                        title="Delete this project"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        {/* Delete */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-rose-500 hover:text-rose-400 group/del h-9 w-9"
+                          onClick={() => handleDelete(c.id, c.name)}
+                          title="Delete this project"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </td>
                 </tr>

@@ -172,14 +172,14 @@ export default function KeywordsPage() {
           <h1 className="text-3xl font-bold text-foreground tracking-tight text-shadow-sm">Keywords</h1>
           <p className="text-muted-foreground mt-1 text-lg">Build and track your topical authority clusters.</p>
         </div>
-        <div className="flex gap-4">
-          <Button variant="outline" className="px-4 border-primary/20 text-primary hover:bg-primary/5" onClick={() => window.location.href='/keyword-research'}>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+          <Button variant="outline" className="px-4 border-primary/20 text-primary hover:bg-primary/5 flex-1 sm:flex-none justify-start sm:justify-center" onClick={() => window.location.href='/keyword-research'}>
             <Radar className="w-4 h-4 mr-2" /> Global Engine
           </Button>
-          <Button variant="outline" className="flex items-center gap-2 border-rose-500/20 text-rose-500 hover:bg-rose-500/10" onClick={handleClearAll}>
+          <Button variant="outline" className="flex items-center gap-2 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 flex-1 sm:flex-none justify-start sm:justify-center" onClick={handleClearAll}>
             <Trash className="w-4 h-4" /> Clear MasterDB
           </Button>
-          <Button onClick={() => openModal()} className="flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
+          <Button onClick={() => openModal()} className="flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 transition-transform flex-1 sm:flex-none justify-start sm:justify-center">
             <Plus className="w-4 h-4" /> Add Keyword
           </Button>
         </div>
@@ -213,8 +213,8 @@ export default function KeywordsPage() {
         </div>
       </div>
 
-      <div className="glass rounded-xl border border-border overflow-hidden shadow-2xl">
-        <table className="w-full text-left">
+      <div className="glass rounded-xl border border-border overflow-x-auto custom-scrollbar shadow-2xl">
+        <table className="w-full text-left min-w-[900px]">
           <thead className="bg-secondary/30 text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border">
             <tr>
               <th className="px-6 py-4">Main Keyword</th>
@@ -290,19 +290,19 @@ export default function KeywordsPage() {
                     {k.status.replace('_', ' ')}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
-                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" onClick={() => runQuickResearch(k)} title="Live Audit">
+                 <td className="px-6 py-4 text-right">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" onClick={() => runQuickResearch(k)} title="Live Audit" className="h-9 w-9">
                          <Radar className="w-4 h-4 text-primary" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openModal(k)} title="Edit Keyword">
+                      <Button variant="ghost" size="icon" onClick={() => openModal(k)} title="Edit Keyword" className="h-9 w-9">
                          <Edit className="w-4 h-4 text-muted-foreground hover:text-primary" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="group/del" onClick={() => handleDelete(k.id, k.main_keyword)} title="Delete Keyword">
+                      <Button variant="ghost" size="icon" className="group/del h-9 w-9" onClick={() => handleDelete(k.id, k.main_keyword)} title="Delete Keyword">
                          <Trash2 className="w-4 h-4 text-muted-foreground group-hover/del:text-rose-500" />
                       </Button>
-                   </div>
-                </td>
+                    </div>
+                 </td>
               </tr>
             ))}
           </tbody>
