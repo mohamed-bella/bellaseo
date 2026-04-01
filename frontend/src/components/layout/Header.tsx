@@ -37,34 +37,36 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-8 py-4 bg-background/80 backdrop-blur-xl border-b border-border transition-colors duration-300">
-      <div className="flex items-center gap-3 w-full sm:w-auto mb-3 sm:mb-0">
+    <header className="sticky top-0 z-30 flex flex-nowrap items-center justify-between px-4 md:px-8 py-3 bg-background/80 backdrop-blur-xl border-b border-border transition-colors duration-300 min-h-[64px]">
+      <div className="flex items-center gap-2 md:gap-4 flex-1">
         <button 
           onClick={() => setSidebarOpen(!isSidebarOpen)}
-          className="p-2 -ml-2 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors md:hidden"
+          className="p-2 -ml-1 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors md:hidden shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
         {/* Search Bar - hidden on very small screens, responsive width */}
-        <form onSubmit={handleSearch} className="relative w-full sm:w-80 md:w-96 group">
+        <form onSubmit={handleSearch} className="relative w-full max-w-[200px] sm:max-w-xs md:max-w-md group hidden xs:flex">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors duration-300 group-focus-within:text-foreground" />
           <input 
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search articles..." 
-            className="w-full bg-secondary border border-border shadow-inner rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-[box-shadow,border-color,background-color] duration-300 ease-out-quart text-foreground"
+            placeholder="Search..." 
+            className="w-full bg-secondary border border-border shadow-inner rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-[box-shadow,border-color,background-color] duration-300 ease-out-quart text-foreground"
           />
         </form>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3 md:gap-4 self-end sm:self-auto">
-        <ThemeToggle />
+      <div className="flex items-center gap-2 md:gap-4 shrink-0 ml-auto">
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
         
         <button 
           onClick={() => setHasNotifications(false)}
-          className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-secondary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-border text-muted-foreground transition-[transform,background-color,color] duration-300 ease-out-quart shadow-sm relative active:scale-95"
+          className="p-2 min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl bg-secondary hover:bg-muted border border-border text-muted-foreground transition-all duration-300 shadow-sm relative active:scale-95 sm:min-h-[44px] sm:min-w-[44px]"
         >
           <Bell className="w-4 h-4" />
           {hasNotifications && (
@@ -72,17 +74,17 @@ export default function Header() {
           )}
         </button>
         
-        <div className="h-6 w-px bg-border/50 mx-1 md:mx-2 hidden sm:block" />
+        <div className="h-6 w-px bg-border/50 mx-0.5 md:mx-1 hidden xs:block" />
         
-        <div className="flex items-center gap-2 p-1 pl-3 md:pl-4 rounded-full bg-secondary border border-border shadow-sm min-h-[44px]">
+        <div className="flex items-center gap-1 sm:gap-2 p-1 pl-2 sm:pl-4 rounded-full bg-secondary border border-border shadow-sm min-h-[40px] sm:min-h-[44px]">
           <span className="text-xs md:text-sm font-semibold text-foreground hidden sm:inline-block">{username}</span>
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner group-hover:bg-primary/20 transition-colors">
-            <User className="w-4 h-4 text-primary" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+            <User className="w-3.5 h-3.5 text-primary" />
           </div>
-          <div className="h-5 w-px bg-border mx-1 hidden sm:block" />
+          <div className="h-5 w-px bg-border mx-1 hidden xs:block" />
           <button 
             onClick={handleLogout}
-            className="p-1.5 rounded-full hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors flex items-center justify-center group"
+            className="p-1.5 rounded-full hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors flex items-center justify-center"
             title="Log out"
           >
             <LogOut className="w-4 h-4" />

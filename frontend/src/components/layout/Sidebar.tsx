@@ -96,6 +96,11 @@ export default function Sidebar() {
   const [role, setRole] = useState<'admin' | 'editor'>('admin');
 
   useEffect(() => {
+    // If screen is mobile, close sidebar by default or on navigation
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+    
     try {
       const userStr = localStorage.getItem('seo_user');
       if (userStr) {
@@ -103,18 +108,27 @@ export default function Sidebar() {
         if (user.role) setRole(user.role);
       }
     } catch (e) { /* ignore */ }
-  }, [pathname]); // Refresh role if pathname changes (just in case they logged out/in)
+  }, [setSidebarOpen, pathname]); // Run on mount and on navigation
 
   // No need for a flat visibleNavItems array, as we map over groups
   const DynamicIcon = (LucideIcons as any)[BRANDING?.logo?.iconName || 'TrendingUp'] || TrendingUp;
 
   return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 left-0 z-50 h-screen shrink-0 transition-all duration-500 ease-out-quart flex flex-col bg-card border-r border-border md:sticky md:translate-x-0',
-        isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:w-20 overflow-hidden'
+    <>
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 h-screen shrink-0 transition-all duration-500 ease-out-quart flex flex-col bg-card border-r border-border md:sticky md:translate-x-0',
+          isSidebarOpen ? 'translate-x-0 w-64 shadow-2xl md:shadow-none' : '-translate-x-full md:w-20 md:translate-x-0 overflow-hidden'
+        )}
+      >
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 md:p-6 shrink-0 h-[80px]">
         <div className="bg-primary shadow-lg shadow-primary/20 p-2 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-105 ease-out-quart">
@@ -228,6 +242,7 @@ export default function Sidebar() {
           <ChevronRight className="w-4 h-4" />
         )}
       </button>
-    </aside>
+      </aside>
+    </>
   );
 }

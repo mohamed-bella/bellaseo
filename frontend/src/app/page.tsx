@@ -130,44 +130,47 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-10">
+    <div className="max-w-7xl mx-auto px-0 sm:px-6 py-4 sm:py-10 space-y-6 sm:space-y-10 focus:outline-none">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-2 px-6 sm:px-0">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
-            <div className={`mt-1 flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${whatsappStatus.connected ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/20 bg-rose-500/10 text-primary'}`}>
+          <div className="flex flex-wrap items-center gap-3 mb-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
+            <div className={`mt-0.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${whatsappStatus.connected ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/20 bg-rose-500/10 text-primary'}`}>
               <div className={`w-1.5 h-1.5 rounded-full ${whatsappStatus.connected ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_theme(colors.emerald.500)]' : 'bg-primary'}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none">
                 {whatsappStatus.connected 
                   ? `WhatsApp Live${whatsappStatus.user ? ` · +${whatsappStatus.user}` : ''}` 
                   : 'WhatsApp Offline'}
               </span>
             </div>
           </div>
-          <p className="text-muted-foreground font-medium">Welcome back. Your SEO automation engine is performing well.</p>
+          <p className="text-sm sm:text-base text-muted-foreground font-medium">Welcome back. Your SEO automation engine is performing well.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/campaigns" className="btn-primary">
+          <Link href="/campaigns" className="btn-primary w-full sm:w-auto text-center justify-center">
             Quick Launch
           </Link>
         </div>
       </div>
 
       {/* Onboarding */}
-      <OnboardingChecklist 
-        hasSites={stats.activeSites > 0} 
-        hasCampaigns={stats.totalCampaigns > 0} 
-        hasKeywords={stats.totalKeywords > 0} 
-      />
+      <div className="px-6 sm:px-0">
+        <OnboardingChecklist 
+          hasSites={stats.activeSites > 0} 
+          hasCampaigns={stats.totalCampaigns > 0} 
+          hasKeywords={stats.totalKeywords > 0} 
+        />
+      </div>
 
-      <NextScheduleCard campaigns={campaigns} />
-
-      {/* E-E-A-T Authority Metrics */}
-      <AuthorityCard />
+      <div className="px-6 sm:px-0 space-y-6 sm:space-y-10">
+        <NextScheduleCard campaigns={campaigns} />
+        {/* E-E-A-T Authority Metrics */}
+        <AuthorityCard />
+      </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-6 sm:px-0">
         <StatCard
           title="Active Sites"
           value={stats.activeSites}
@@ -200,9 +203,9 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8 px-6 sm:px-0 pb-10">
         {/* Currently Running */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
           <div className="bg-card rounded-xl p-8 border border-border h-full">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
