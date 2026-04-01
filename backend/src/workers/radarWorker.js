@@ -66,11 +66,19 @@ async function runRadarCycle() {
     }
 
     for (const rule of rules) {
-      const platforms = rule.platforms || ['reddit.com', 'quora.com'];
+      const platforms = rule.platforms || [
+        'reddit.com', 
+        'quora.com', 
+        'tripadvisor.com', 
+        'trustpilot.com', 
+        'x.com', 
+        'facebook.com', 
+        'linkedin.com'
+      ];
       
       for (const platform of platforms) {
         const query = `site:${platform} "${rule.keywords}"`;
-        const research = await researchService.searchKeyword(query, 10);
+        const research = await researchService.searchKeyword(query, 24, 'english', { tbs: 'qdr:d' });
         if (!research || !research.organic) continue;
 
         for (const res of research.organic) {

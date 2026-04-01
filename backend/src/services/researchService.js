@@ -29,9 +29,10 @@ const LANG_MAP = {
  * @param {string} query — The search term (usually the main keyword)
  * @param {number} num — Number of organic results to return (default 5)
  * @param {string} lang — The language/region code (default 'english')
+ * @param {Object} options — Additional Serper parameters (e.g. tbs for time filtering)
  * @returns {Object} structured research data
  */
-async function searchKeyword(query, num = 5, lang = 'english') {
+async function searchKeyword(query, num = 5, lang = 'english', options = {}) {
   const keys = await settingsService.getSetting('api_keys').catch(() => ({}));
   let apiKey = keys?.serper || env.SERPER_API_KEY;
   if (apiKey) apiKey = apiKey.toString().trim();
@@ -42,7 +43,7 @@ async function searchKeyword(query, num = 5, lang = 'english') {
   }
 
   try {
-    console.log(`[research] Fetching SERP data for: "${query}"`);
+    console.log(`[research] Fetching SERP data for: "${query}" (tbs: ${options.tbs || 'none'})`);
 
     const region = LANG_MAP[lang] || { gl: 'us', hl: 'en' };
     const response = await axios.post(
@@ -52,6 +53,7 @@ async function searchKeyword(query, num = 5, lang = 'english') {
         num,
         gl: region.gl,
         hl: region.hl,
+        tbs: options.tbs || undefined,
       },
       {
         headers: {
