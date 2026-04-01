@@ -16,7 +16,8 @@ jobs:
         with:
           host: 77.42.43.52
           username: root
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_PASSPHRASE }}
           script: |
             cd /root/bellaseo
             # Pull latest changes from git
