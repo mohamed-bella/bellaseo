@@ -52,42 +52,37 @@ const colorMap: Record<string, { bg: string; ring: string; shadow: string; bar: 
 
 const navGroups = [
   {
-    label: 'Main',
+    label: 'Command Center',
     items: [
       { name: 'Dashboard', icon: FcHome, href: '/', themeColor: 'blue' },
-      { name: 'Traffic Stats', icon: FcLineChart, href: '/analytics', themeColor: 'purple' },
-      { name: 'Opportunity Radar', icon: FcRadarPlot, href: '/radar', themeColor: 'red' },
+      { name: 'Analytics', icon: FcLineChart, href: '/analytics', themeColor: 'purple' },
     ]
   },
   {
-    label: 'Content Engine',
+    label: 'Content Pipeline',
     items: [
       { name: 'Projects', icon: FcFolder, href: '/campaigns', themeColor: 'emerald' },
       { name: 'Keywords', icon: FcKey, href: '/keywords', themeColor: 'pink' },
-      { name: 'Research Engine', icon: FcRadarPlot, href: '/keyword-research', themeColor: 'blue' },
-      { name: 'Topic Maps', icon: FcMindMap, href: '/map', themeColor: 'orange' },
       { name: 'Articles', icon: FcOpenedFolder, href: '/articles', themeColor: 'rose' },
-      { name: 'Auto-Publish', icon: FcFlashOn, href: '/workflows', themeColor: 'amber' },
-      { name: 'Content Lab', icon: Zap, href: '/content-lab', themeColor: 'amber' },
+      { name: 'Content Lab', icon: FcFlashOn, href: '/content-lab', themeColor: 'amber' },
+      { name: 'Auto-Publish', icon: FcFlashOn, href: '/workflows', themeColor: 'orange' },
     ]
   },
   {
-    label: 'System & Org',
+    label: 'Platform',
     items: [
       { name: 'Integrations', icon: FcGlobe, href: '/sites', themeColor: 'cyan' },
-      { name: 'Authority Builder', icon: FcApproval, href: '/eeat', themeColor: 'teal' },
       { name: 'Article Studio', icon: FcTemplate, href: '/article-config', themeColor: 'purple' },
-      { name: 'Notifications', icon: FcAlarmClock, href: '/notifications', themeColor: 'pink' },
-      { name: 'Team', icon: FcBusinessman, href: '/team', themeColor: 'blue' },
+      { name: 'Lead Radar', icon: FcRadarPlot, href: '/radar', themeColor: 'red' },
       { name: 'Settings', icon: FcSettings, href: '/settings', themeColor: 'slate' },
     ]
   }
 ];
 
 const STEPS = [
-  { label: 'Connect a site', href: '/sites' },
+  { label: 'Connect a website', href: '/sites' },
   { label: 'Create a project', href: '/campaigns' },
-  { label: 'Add topics & generate', href: '/keywords' },
+  { label: 'Add keywords & generate', href: '/keywords' },
 ];
 
 interface SidebarProps {

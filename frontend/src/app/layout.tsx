@@ -14,6 +14,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: `${BRANDING.name} | ${BRANDING.tagline}`,
   description: `${BRANDING.tagline} - ${BRANDING.companyName}`,
+  robots: 'noindex, nofollow',
 };
 
 export default function RootLayout({

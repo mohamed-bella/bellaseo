@@ -6,14 +6,17 @@ import {
   Tags,
   FileText,
   Globe,
-  CheckCircle2,
   Clock,
-  ShieldCheck,
   History,
   Zap,
   Activity,
   FolderPlus,
   Search,
+  ArrowRight,
+  Plus,
+  Sparkles,
+  Rocket,
+  ExternalLink,
 } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
@@ -93,21 +96,16 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh] relative overflow-hidden">
-        {/* Abstract Background Accents */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-        
         <div className="relative z-10 flex flex-col items-center">
-            {/* Logo Spinner Hybrid */}
             <div className="relative mb-10">
-                <div className="w-24 h-24 rounded-full border-[3px] border-primary/10 border-t-primary animate-[spin_1.5s_linear_infinite]" />
+                <div className="w-20 h-20 rounded-full border-[3px] border-primary/10 border-t-primary animate-[spin_1.5s_linear_infinite]" />
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <ShieldCheck className="w-10 h-10 text-primary/80" />
+                    <Rocket className="w-8 h-8 text-primary/80" />
                 </div>
             </div>
-
-            {/* Loading text with animated dots */}
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-black text-foreground tracking-tight animate-pulse">Initializing Engine</h2>
+            <div className="text-center space-y-3">
+              <h2 className="text-xl font-black text-foreground tracking-tight">Loading Dashboard</h2>
               <div className="flex gap-1.5 justify-center">
                   {[0, 1, 2].map((i) => (
                     <div 
@@ -117,10 +115,8 @@ export default function DashboardPage() {
                     />
                   ))}
               </div>
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] opacity-40 pt-4">Connecting to Authority Clusters</p>
             </div>
         </div>
-
         <style jsx>{`
           @keyframes bounce {
             0%, 100% { transform: translateY(0); opacity: 0.3; }
@@ -132,180 +128,118 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-0 sm:px-6 py-4 sm:py-10 space-y-6 sm:space-y-10 focus:outline-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 pb-2 px-6 sm:px-0">
+    <div className="max-w-7xl mx-auto space-y-8 focus:outline-none">
+      
+      {/* ── Header Row ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-3 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
-            <div className={`mt-0.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${whatsappStatus.connected ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-rose-500/20 bg-rose-500/10 text-primary'}`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${whatsappStatus.connected ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_theme(colors.emerald.500)]' : 'bg-primary'}`} />
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest leading-none">
-                {whatsappStatus.connected 
-                  ? `WhatsApp Live${whatsappStatus.user ? ` · +${whatsappStatus.user}` : ''}` 
-                  : 'WhatsApp Offline'}
-              </span>
-            </div>
-          </div>
-          <p className="text-sm sm:text-base text-muted-foreground font-medium">Welcome back. Your SEO automation engine is performing well.</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Your SEO automation at a glance.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/campaigns" className="btn-primary w-full sm:w-auto text-center justify-center">
-            Quick Launch
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${whatsappStatus.connected ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500' : 'border-border bg-secondary text-muted-foreground'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${whatsappStatus.connected ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'}`} />
+            {whatsappStatus.connected ? 'WhatsApp Live' : 'WhatsApp Offline'}
+          </div>
+          <Link href="/campaigns" className="btn-primary text-sm gap-2">
+            <Plus className="w-4 h-4" /> New Project
           </Link>
         </div>
       </div>
 
-      {/* Mobile-Only Quick Actions */}
-      <div className="grid grid-cols-2 gap-4 px-6 sm:hidden pb-2">
-        <Link 
-          href="/campaigns" 
-          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-primary/10 border border-primary/20 text-primary shadow-sm active:scale-95 transition-transform"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-3">
-            <FolderPlus className="w-5 h-5" />
-          </div>
-          <span className="text-xs font-black uppercase tracking-widest">New Project</span>
+      {/* ── Stats Grid (information density first) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Sites" value={stats.activeSites} icon={Globe} description="Connected" isLoading={isLoading} />
+        <StatCard title="Projects" value={stats.totalCampaigns} icon={FolderKanban} description="Active clusters" isLoading={isLoading} />
+        <StatCard title="Keywords" value={stats.totalKeywords} icon={Tags} description="Tracked" isLoading={isLoading} />
+        <StatCard title="Published" value={stats.publishedArticles} icon={FileText} description="Live articles" isLoading={isLoading} />
+      </div>
+
+      {/* ── Quick Actions Strip (compact, not giant cards) ── */}
+      <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-card border border-border">
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2 flex items-center gap-1.5">
+          <Zap className="w-3.5 h-3.5 text-primary" /> Quick Actions
+        </span>
+        <Link href="/campaigns" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 hover:bg-primary/10 border border-primary/10 hover:border-primary/30 text-primary text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-95">
+          <FolderPlus className="w-3.5 h-3.5" /> New Project
         </Link>
-        <Link 
-          href="/keyword-research" 
-          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 shadow-sm active:scale-95 transition-transform"
-        >
-          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-3">
-            <Search className="w-5 h-5" />
-          </div>
-          <span className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Research</span>
+        <Link href="/keywords" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/5 hover:bg-blue-500/10 border border-blue-500/10 hover:border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-95">
+          <Search className="w-3.5 h-3.5" /> Add Keywords
         </Link>
-        <Link 
-          href="/sites" 
-          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 shadow-sm active:scale-95 transition-transform"
-        >
-          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
-            <Globe className="w-5 h-5" />
-          </div>
-          <span className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Add Site</span>
+        <Link href="/sites" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 hover:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-95">
+          <Globe className="w-3.5 h-3.5" /> Connect Site
         </Link>
-        <Link 
-          href="/content-lab" 
-          className="flex flex-col items-center justify-center p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 shadow-sm active:scale-95 transition-transform"
-        >
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
-            <Zap className="w-5 h-5" />
-          </div>
-          <span className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">AI Lab</span>
+        <Link href="/content-lab" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 hover:border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold transition-all hover:-translate-y-0.5 active:scale-95">
+          <Sparkles className="w-3.5 h-3.5" /> AI Content Lab
         </Link>
       </div>
 
-      {/* Onboarding */}
-      <div className="px-6 sm:px-0">
-        <OnboardingChecklist 
-          hasSites={stats.activeSites > 0} 
-          hasCampaigns={stats.totalCampaigns > 0} 
-          hasKeywords={stats.totalKeywords > 0} 
-        />
-      </div>
+      {/* ── Onboarding (only if incomplete) ── */}
+      <OnboardingChecklist 
+        hasSites={stats.activeSites > 0} 
+        hasCampaigns={stats.totalCampaigns > 0} 
+        hasKeywords={stats.totalKeywords > 0} 
+      />
 
-      <div className="px-6 sm:px-0 space-y-6 sm:space-y-10">
+      {/* ── Schedule + Authority side-by-side ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <NextScheduleCard campaigns={campaigns} />
-        {/* E-E-A-T Authority Metrics */}
         <AuthorityCard />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 px-6 sm:px-0">
-        <StatCard
-          title="Active Sites"
-          value={stats.activeSites}
-          icon={Globe}
-          description="Connected platforms"
-          isLoading={isLoading}
-        />
-        <StatCard
-          title="Live Clusters"
-          value={stats.totalCampaigns}
-          icon={FolderKanban}
-          description="Thematic silos"
-          isLoading={isLoading}
-        />
-        <StatCard
-          title="Target Keywords"
-          value={stats.totalKeywords}
-          icon={Tags}
-          trend={{ value: 8, isUp: true }}
-          description="Target SEO reach"
-          isLoading={isLoading}
-        />
-        <StatCard
-          title="Articles"
-          value={stats.publishedArticles}
-          icon={FileText}
-          trend={{ value: 24, isUp: true }}
-          description="Live on your websites"
-          isLoading={isLoading}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8 px-6 sm:px-0 pb-10">
-        {/* Currently Running */}
+      {/* ── Live Engine + Activity ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 pb-10">
+        {/* Live Engine */}
         <div className="xl:col-span-2">
-          <div className="bg-card rounded-xl p-8 border border-border h-full">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold text-foreground flex items-center gap-3">
-                <Activity className="w-6 h-6 text-primary" />
+          <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border h-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-black text-foreground flex items-center gap-3">
+                <Activity className="w-5 h-5 text-primary" />
                 Live Engine
               </h3>
-              <span className="text-[11px] font-black text-primary border border-primary/20 px-3 py-1 rounded-full uppercase tracking-widest">
-                Active
+              <span className="text-[10px] font-black text-primary border border-primary/20 px-2.5 py-1 rounded-full uppercase tracking-widest">
+                {activeWorkflows.length > 0 ? `${activeWorkflows.length} Running` : 'Idle'}
               </span>
             </div>
 
-            <div className="space-y-4">
-              {isLoading ? (
-                <div className="py-20 flex items-center justify-center">
-                  <LoadingSpinner size={40} />
-                </div>
-              ) : activeWorkflows.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
-                  <Clock className="w-12 h-12 mb-4 opacity-10" />
-                  <p className="text-base font-bold text-foreground">Nothing is running right now</p>
-                  <p className="text-[13px] text-center opacity-70 mt-1 max-w-xs font-medium">
+            <div className="space-y-3">
+              {activeWorkflows.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
+                  <Clock className="w-10 h-10 mb-3 opacity-10" />
+                  <p className="text-sm font-bold text-foreground">No active workflows</p>
+                  <p className="text-xs text-center opacity-60 mt-1 max-w-xs">
                     Go to{' '}
                     <Link href="/campaigns" className="text-primary hover:underline font-bold">
-                      My Projects
+                      Projects
                     </Link>{' '}
-                    to start generating.
+                    to start generating content.
                   </p>
                 </div>
               ) : (
                 activeWorkflows.map((w) => (
                   <div
                     key={w.id}
-                    className="flex items-center justify-between p-6 rounded-2xl border border-border bg-muted/20"
+                    className="flex items-center justify-between p-5 rounded-xl border border-border bg-secondary/30"
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="w-3 h-3 bg-primary rounded-full animate-ping" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-2.5 h-2.5 bg-primary rounded-full animate-ping" />
                       <div>
-                        <p className="text-base font-bold text-foreground leading-tight">
+                        <p className="text-sm font-bold text-foreground leading-tight">
                           {WORKFLOW_STATUS_LABELS[w.status] || w.status}
                         </p>
-                        <p className="text-[11px] text-muted-foreground uppercase font-black tracking-widest mt-1.5 opacity-70">
+                        <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1 opacity-60">
                           {w.campaigns?.name || 'Manual Run'}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-black text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-border/50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-muted-foreground bg-secondary px-2 py-0.5 rounded-full uppercase tracking-widest border border-border/50">
                         {w.status === 'pending' ? 'Queued' : 'Processing'}
                       </span>
-                      <div className="w-32 h-1 bg-secondary rounded-full overflow-hidden relative">
-                        {w.status === 'pending' ? (
-                          <div className="h-full bg-muted-foreground/30 w-full" />
-                        ) : (
-                          <div className="h-full bg-primary/20 w-full absolute top-0 left-0">
-                             <div className="h-full bg-primary w-1/2 rounded-full absolute top-0 left-0 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] origin-left" />
-                             <div className="h-full bg-primary w-1/3 rounded-full absolute top-0 left-0 animate-pulse" />
-                          </div>
-                        )}
+                      <div className="w-24 h-1 bg-secondary rounded-full overflow-hidden relative">
+                        <div className="h-full bg-primary/20 w-full absolute inset-0">
+                           <div className="h-full bg-primary w-1/3 rounded-full absolute left-0 animate-pulse" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -315,83 +249,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Sidebar Panels */}
-        <div className="space-y-8">
-          {/* System Health */}
-          <div className="bg-card rounded-xl p-8 border border-border">
-            <h3 className="text-xl font-bold text-foreground mb-8 flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-emerald-500" />
-              Infrastructure
-            </h3>
-            <div className="space-y-6">
-              {[
-                { label: 'API Cluster', status: 'Optimal', ok: true },
-                { label: 'Cloud DB', status: 'Connected', ok: true },
-                {
-                  label: 'WhatsApp Relay',
-                  status: whatsappStatus.connected ? 'Active' : 'Offline',
-                  ok: whatsappStatus.connected,
-                },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-2.5 h-2.5 rounded-full ${item.ok ? 'bg-emerald-500' : 'bg-primary'}`} />
-                    <span className="text-sm font-bold text-muted-foreground">
-                      {item.label}
-                    </span>
-                  </div>
-                  <span
-                    className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${
-                      item.ok
-                        ? 'text-emerald-600 border-emerald-100 bg-emerald-50'
-                        : 'text-primary border-rose-100 bg-rose-50'
-                    }`}
-                  >
-                    {item.status}
-                  </span>
+        {/* Recent Activity */}
+        <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border">
+          <h3 className="text-lg font-black text-foreground mb-6 flex items-center gap-3">
+            <History className="w-5 h-5 text-primary" />
+            Activity Feed
+          </h3>
+          <div className="space-y-4">
+            {recentLogs.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic py-8 text-center">
+                No activity recorded yet.
+              </p>
+            ) : (
+              recentLogs.map((log) => (
+                <div key={log.id} className="border-l-2 border-primary/20 pl-4 py-1">
+                  <p className="text-xs font-medium text-foreground/80 line-clamp-2 leading-relaxed">
+                    {log.message}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-1.5 font-bold opacity-50">
+                    <Clock className="w-2.5 h-2.5" />
+                    {new Date(log.created_at).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div className="bg-card rounded-xl p-8 border border-border">
-            <h3 className="text-xl font-bold text-foreground mb-8 flex items-center gap-3">
-              <History className="w-6 h-6 text-primary" />
-              Activity
-            </h3>
-            <div className="space-y-5">
-              {recentLogs.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                  No activity yet.
-                </p>
-              ) : (
-                recentLogs.map((log) => (
-                  <div key={log.id} className="border-l-2 border-border pl-4 py-0.5">
-                    <p className="text-[13px] font-medium text-foreground/80 line-clamp-2 leading-relaxed">
-                      {log.message}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground uppercase flex items-center gap-1.5 mt-2 font-black tracking-widest opacity-60">
-                      <Clock className="w-2.5 h-2.5" />
-                      {new Date(log.created_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                ))
-              )}
-              <Link
-                href="/workflows"
-                className="block text-center text-[11px] font-black text-primary hover:opacity-80 transition-opacity uppercase tracking-widest pt-4 border-t border-border mt-4"
-              >
-                Full Engine Logs →
-              </Link>
-            </div>
+              ))
+            )}
+            <Link
+              href="/workflows"
+              className="flex items-center justify-center gap-2 text-[11px] font-black text-primary hover:opacity-80 transition-opacity uppercase tracking-widest pt-4 border-t border-border mt-2"
+            >
+              View All Logs <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

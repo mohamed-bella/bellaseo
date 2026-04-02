@@ -108,6 +108,10 @@ body {
   border: 1px solid var(--border);
 }
 
+.dark .glass {
+  background-color: rgba(34, 34, 34, 0.8);
+}
+
 @utility glass-premium {
   @apply glass;
 }
