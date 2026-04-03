@@ -9,6 +9,10 @@ const axios = require('axios');
  */
 async function getInternalLinks(site, keyword, supabase) {
   const links = [];
+  
+  // 0. Fetch the internal linking configuration from DB
+  const { data: configData } = await supabase.from('system_settings').select('value').eq('key', 'internal_linking_config').single();
+  const enabledCpts = configData?.value?.enabled_cpts || ['post'];
 
   // 1. Cluster Linking (Silo logic)
   if (keyword.cluster_id) {
@@ -44,20 +48,35 @@ async function getInternalLinks(site, keyword, supabase) {
     });
   }
 
-  // 2. Dynamic Search Fallback (if not enough cluster links)
-  if (links.length < 2 && site.type === 'wordpress') {
+  // 2. Dynamic Search Fallback (Across enabled CPTs)
+  if (links.length < 3 && site.type === 'wordpress') {
     try {
-      const { data: posts } = await axios.get(`${site.api_url}/wp-json/wp/v2/posts`, {
-        params: { search: keyword.main_keyword, per_page: 3 },
-        timeout: 5000
-      });
-      posts.forEach(p => {
-        if (!links.find(l => l.url === p.link)) {
-          links.push({ title: p.title.rendered, url: p.link });
+      // Loop through each enabled CPT and search for relevant content
+      for (const cpt of enabledCpts) {
+        if (links.length >= 5) break; // Limit total suggestions
+
+        // Handle 'post' vs custom endpoint
+        const endpoint = cpt === 'post' ? 'posts' : (cpt === 'page' ? 'pages' : cpt);
+        
+        try {
+          const { data: results } = await axios.get(`${site.api_url}/wp-json/wp/v2/${endpoint}`, {
+            params: { search: keyword.main_keyword, per_page: 2 },
+            timeout: 5000
+          });
+          
+          results?.forEach(p => {
+            const url = p.link || p.url;
+            const title = p.title?.rendered || p.title;
+            if (url && title && !links.find(l => l.url === url)) {
+              links.push({ title, url });
+            }
+          });
+        } catch (cptErr) {
+          console.warn(`[Linking] WP fetch failed for CPT "${cpt}":`, cptErr.message);
         }
-      });
+      }
     } catch (err) {
-      console.warn('[Linking] WP fetch failed:', err.message);
+      console.warn('[Linking] Global WP fetch failed:', err.message);
     }
   }
 

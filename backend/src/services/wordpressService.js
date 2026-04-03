@@ -347,5 +347,45 @@ async function updatePost(site, wpPostId, updatedContent) {
   return { success: true };
 }
 
-module.exports = { publishToWordPress, updatePost, getPostTypes, getSiteDiagnostics };
+/**
+ * Fetch a list of posts from a specific CPT
+ */
+async function getPostsByType(site, postType, limit = 10) {
+  let creds = site.credentials_json ? JSON.parse(site.credentials_json) : {};
+  if (!creds.username || !creds.app_password) {
+    const globalConfigs = await settingsService.getSetting('global_fallbacks');
+    creds.username = creds.username || globalConfigs?.wp_user;
+    creds.app_password = creds.app_password || globalConfigs?.wp_pass;
+  }
+
+  const authHeader = getAuthHeader(creds);
+  const { api_url } = site;
+  
+  let endpoint = postType === 'post' ? 'posts' : (postType === 'page' ? 'pages' : postType);
+  let namespace = 'wp/v2';
+
+  // For CPTs, we might need to find the correct rest_base
+  if (postType !== 'post' && postType !== 'page') {
+    try {
+      const typeResp = await axios.get(`${api_url}/wp-json/wp/v2/types/${postType}`, { headers: authHeader });
+      endpoint = typeResp.data.rest_base || postType;
+      namespace = typeResp.data.rest_namespace || 'wp/v2';
+    } catch { /* fallback to slug */ }
+  }
+
+  const { data } = await axios.get(`${api_url}/wp-json/${namespace}/${endpoint}`, {
+    headers: authHeader,
+    params: { per_page: limit, _fields: 'id,title,link,date' },
+    timeout: 10000
+  });
+
+  return data.map(p => ({
+    id: p.id,
+    title: p.title.rendered || p.title,
+    link: p.link,
+    date: p.date
+  }));
+}
+
+module.exports = { publishToWordPress, updatePost, getPostTypes, getSiteDiagnostics, getPostsByType };
 

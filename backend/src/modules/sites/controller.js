@@ -138,4 +138,22 @@ const getDiagnostics = async (req, res, next) => {
   }
 };
 
-module.exports = { list, get, create, update, remove, testConnection, getPostTypes, getDiagnostics };
+const getPosts = async (req, res, next) => {
+  try {
+    const { data: site, error } = await supabase.from('sites').select('*').eq('id', req.params.id).single();
+    if (error) throw error;
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+
+    if (site.type !== 'wordpress') {
+      return res.status(400).json({ error: 'Fetching posts only supported for WordPress sites' });
+    }
+
+    const { type = 'post', limit = 10 } = req.query;
+    const posts = await wordpressService.getPostsByType(site, type, parseInt(limit));
+    res.json(posts);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { list, get, create, update, remove, testConnection, getPostTypes, getDiagnostics, getPosts };

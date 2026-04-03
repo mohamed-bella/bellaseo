@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Cpu, Save, Globe, Lock, Server, Palette, MessageCircle, Wifi, WifiOff, RefreshCw, Trash2 } from 'lucide-react';
+import { Cpu, Save, Globe, Lock, Server, Palette, MessageCircle, Wifi, WifiOff, RefreshCw, Trash2, Link as LinkIcon, CheckCircle2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import apiClient from '@/services/apiClient';
 import { toast } from 'sonner';
@@ -33,9 +33,14 @@ export default function SettingsPage() {
     api_keys: { openai: '', gemini: '', serper: '' },
     global_fallbacks: { wp_user: '', wp_pass: '', google_client_id: '' },
     authority: { google_indexing_enabled: false, google_indexing_key_file: '' },
-    security: { api_secret: '' }
+    security: { api_secret: '' },
+    internal_linking_config: { enabled_cpts: ['post', 'page'] }
   });
-
+  const [allCpts, setAllCpts] = useState<any[]>([]);
+  const [isSyncingCpts, setIsSyncingCpts] = useState(false);
+  const [previewPosts, setPreviewPosts] = useState<any[]>([]);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [selectedCptForPreview, setSelectedCptForPreview] = useState<string | null>(null);
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -50,6 +55,21 @@ export default function SettingsPage() {
       }
     };
     fetchSettings();
+    
+    // Fetch CPTs from all sites to aggregate options
+    const fetchCptOptions = async () => {
+      try {
+        const { data: sites } = await apiClient.get('/sites');
+        const wpSites = sites.filter((s: any) => s.type === 'wordpress');
+        if (wpSites.length > 0) {
+          const { data: cpts } = await apiClient.get(`/sites/${wpSites[0].id}/post-types`);
+          setAllCpts(cpts);
+        }
+      } catch (err) {
+        console.error('Failed to fetch CPT options:', err);
+      }
+    };
+    fetchCptOptions();
   }, []);
 
   useEffect(() => {
@@ -109,6 +129,24 @@ export default function SettingsPage() {
     }
   };
 
+  const handleOpenPreview = async (cptSlug: string) => {
+    setSelectedCptForPreview(cptSlug);
+    setIsPreviewLoading(true);
+    setPreviewPosts([]);
+    try {
+      const { data: sites } = await apiClient.get('/sites');
+      const wpSites = sites.filter((s: any) => s.type === 'wordpress');
+      if (wpSites.length > 0) {
+        const { data } = await apiClient.get(`/sites/${wpSites[0].id}/posts`, { params: { type: cptSlug, limit: 12 } });
+        setPreviewPosts(data);
+      }
+    } catch (err) {
+      toast.error('Failed to fetch preview posts');
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
   if (isLoading) return <div className="py-20 text-center text-muted-foreground">Loading system settings...</div>;
 
   return (
@@ -142,30 +180,37 @@ export default function SettingsPage() {
              <Globe className="w-4 h-4" />
              <span className="font-medium text-sm">Global Fallbacks</span>
            </button>
-           <button
-             onClick={() => setActiveTab('security')}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'security' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
-           >
-             <Lock className="w-4 h-4" />
-             <span className="font-medium text-sm">Security</span>
-           </button>
-           <button
-             onClick={() => setActiveTab('whatsapp')}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'whatsapp' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-muted-foreground hover:bg-secondary'}`}
-           >
-             <MessageCircle className="w-4 h-4" />
-             <span className="font-medium text-sm">WhatsApp</span>
-             {waStatus.connected && (
-               <span className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-             )}
-           </button>
-           <button
-             onClick={() => setActiveTab('database')}
-             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'database' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
-           >
-             <Server className="w-4 h-4" />
-             <span className="font-medium text-sm">System Health</span>
-           </button>
+            <button
+              onClick={() => setActiveTab('linking')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'linking' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
+            >
+              <LinkIcon className="w-4 h-4" />
+              <span className="font-medium text-sm">Linking Engine</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'security' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Lock className="w-4 h-4" />
+              <span className="font-medium text-sm">Security</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('whatsapp')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'whatsapp' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-muted-foreground hover:bg-secondary'}`}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="font-medium text-sm">WhatsApp</span>
+              {waStatus.connected && (
+                <span className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'database' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Server className="w-4 h-4" />
+              <span className="font-medium text-sm">System Health</span>
+            </button>
         </aside>
 
 
@@ -402,6 +447,103 @@ export default function SettingsPage() {
                   </Button>
                 </div>
              </div>
+           )}
+
+           {/* LINKING ENGINE TAB */}
+           {activeTab === 'linking' && (
+              <div className="card-premium space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                 <div className="border-b border-border pb-6 flex items-start justify-between">
+                    <div>
+                       <h3 className="font-bold text-foreground text-lg">Internal Linking Engine</h3>
+                       <p className="text-sm text-muted-foreground">Select which content types should be used as sources for internal internal linking.</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={async () => {
+                        setIsSyncingCpts(true);
+                        try {
+                          const { data: sites } = await apiClient.get('/sites');
+                          const wpSites = sites.filter((s: any) => s.type === 'wordpress');
+                          if (wpSites.length > 0) {
+                            const { data: cpts } = await apiClient.get(`/sites/${wpSites[0].id}/post-types`);
+                            setAllCpts(cpts);
+                            toast.success('Graphed available CPTs from WordPress');
+                          }
+                        } finally { setIsSyncingCpts(false); }
+                      }}
+                      isLoading={isSyncingCpts}
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 mr-2" /> Graph CPTs
+                    </Button>
+                 </div>
+
+                 <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {allCpts.map((cpt: any) => (
+                         <div 
+                           key={cpt.slug}
+                           onClick={() => {
+                             const current = settings.internal_linking_config.enabled_cpts || [];
+                             const next = current.includes(cpt.slug) 
+                               ? current.filter((s: string) => s !== cpt.slug) 
+                               : [...current, cpt.slug];
+                             setSettings({ ...settings, internal_linking_config: { ...settings.internal_linking_config, enabled_cpts: next } });
+                           }}
+                           className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
+                             (settings.internal_linking_config.enabled_cpts || []).includes(cpt.slug)
+                               ? 'bg-primary/10 border-primary/30 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]'
+                               : 'bg-secondary/40 border-border/50 hover:border-primary/20'
+                           }`}
+                         >
+                           <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                                 (settings.internal_linking_config.enabled_cpts || []).includes(cpt.slug)
+                                   ? 'bg-primary text-white'
+                                   : 'bg-secondary text-muted-foreground group-hover:text-foreground'
+                              }`}>
+                                 <Globe className="w-5 h-5" />
+                              </div>
+                              <div>
+                                 <p className="font-bold text-foreground text-sm">{cpt.name}</p>
+                                 <p className="text-[10px] text-muted-foreground uppercase font-mono tracking-wider">{cpt.slug}</p>
+                              </div>
+                           </div>
+                           {(settings.internal_linking_config.enabled_cpts || []).includes(cpt.slug) && (
+                             <div className="flex items-center gap-2 animate-in zoom-in duration-300">
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); handleOpenPreview(cpt.slug); }}
+                                 className="text-[10px] bg-primary/20 text-primary px-2 py-1 rounded hover:bg-primary/30 transition-colors uppercase font-bold"
+                               >
+                                 Preview
+                               </button>
+                               <CheckCircle2 className="w-5 h-5 text-primary" />
+                             </div>
+                           )}
+                         </div>
+                       ))}
+                       {allCpts.length === 0 && (
+                         <div className="col-span-2 py-10 text-center border-2 border-dashed border-border rounded-3xl">
+                            <LinkIcon className="w-10 h-10 text-muted-foreground mx-auto opacity-20 mb-3" />
+                            <p className="text-sm text-muted-foreground">No custom post types discovered yet.</p>
+                            <p className="text-[10px] text-muted-foreground italic mt-1">Connect a WordPress site and click "Graph CPTs" to see options.</p>
+                         </div>
+                       )}
+                    </div>
+                    
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                       <p className="text-xs text-muted-foreground italic leading-relaxed">
+                         <strong>Note:</strong> When generating articles, the system will search through all selected types for relevant content and automatically inject internal links into the new articles.
+                       </p>
+                    </div>
+                 </div>
+
+                 <div className="pt-6 border-t border-border flex justify-end">
+                    <Button onClick={() => handleSave('internal_linking_config', settings.internal_linking_config)} isLoading={isSaving}>
+                       <Save className="w-4 h-4 mr-2" /> Save Linking Profile
+                    </Button>
+                 </div>
+              </div>
            )}
 
            {/* GLOBAL FALLBACKS TAB */}
@@ -717,6 +859,60 @@ export default function SettingsPage() {
             )}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {selectedCptForPreview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 text-left">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedCptForPreview(null)} />
+          <div className="relative w-full max-w-2xl bg-secondary border border-border rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-foreground">Content Preview: {selectedCptForPreview}</h3>
+                <p className="text-xs text-muted-foreground">Showing the most recent entries of this type found on your site.</p>
+              </div>
+              <button onClick={() => setSelectedCptForPreview(null)} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground hover:text-foreground transition-colors">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+               {isPreviewLoading ? (
+                 <div className="py-20 text-center animate-pulse">
+                    <RefreshCw className="w-8 h-8 text-primary mx-auto animate-spin mb-4" />
+                    <p className="text-sm text-muted-foreground">Fetching posts from WordPress API...</p>
+                 </div>
+               ) : previewPosts.length > 0 ? (
+                 <div className="grid grid-cols-1 gap-3">
+                    {previewPosts.map((post: any) => (
+                      <a 
+                        key={post.id} 
+                        href={post.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-white/10 transition-all group block"
+                      >
+                         <h4 className="font-bold text-foreground group-hover:text-primary transition-colors text-sm line-clamp-1">{post.title}</h4>
+                         <div className="flex items-center gap-3 mt-1.5">
+                            <span className="text-[10px] text-muted-foreground font-mono">{new Date(post.date).toLocaleDateString()}</span>
+                            <span className="text-[10px] text-primary underline opacity-0 group-hover:opacity-100 transition-opacity">View Article ↗</span>
+                         </div>
+                      </a>
+                    ))}
+                 </div>
+               ) : (
+                 <div className="py-20 text-center border-2 border-dashed border-border rounded-3xl">
+                    <Globe className="w-12 h-12 text-muted-foreground mx-auto opacity-10 mb-4" />
+                    <p className="text-sm text-muted-foreground">No content found for this type.</p>
+                 </div>
+               )}
+            </div>
+            
+            <div className="p-6 bg-secondary/50 border-t border-border flex justify-end">
+               <Button onClick={() => setSelectedCptForPreview(null)}>Close Preview</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

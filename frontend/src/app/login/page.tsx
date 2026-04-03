@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (error || !data.user) throw error;
       
       // Store token for backend compatibility
-      Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, secure: true });
+      Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, secure: true, path: '/' });
 
       // Fetch precise role from Supabase for UI state (SAFE: default to editor if row missing)
       let role: 'admin' | 'editor' = 'editor';

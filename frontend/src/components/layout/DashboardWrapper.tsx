@@ -15,6 +15,9 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   const [branding, setBranding] = useState<any>(null);
 
   useEffect(() => {
+    // Skip fetching branding on the login page
+    if (pathname?.startsWith('/login')) return;
+
     const fetchBranding = async () => {
       try {
         const { data } = await apiClient.get('/settings');
@@ -30,10 +33,10 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
       }
     };
     fetchBranding();
-  }, []);
+  }, [pathname]);
 
   // If on login page, render raw children without the dashboard layout
-  if (pathname === '/login') {
+  if (pathname?.startsWith('/login')) {
     return <>{children}</>;
   }
 

@@ -10,5 +10,6 @@ router.delete('/:id', controller.remove);
 router.post('/:id/test', controller.testConnection);
 router.get('/:id/post-types', controller.getPostTypes);
 router.get('/:id/diagnostics', controller.getDiagnostics);
+router.get('/:id/posts', controller.getPosts);
 
 module.exports = router;

@@ -25,8 +25,9 @@ apiClient.interceptors.response.use((response) => {
 }, (error) => {
   if (error.response && error.response.status === 401) {
     // If we're not already on the login page, log out and redirect
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-      Cookies.remove('seo_admin_token');
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      console.warn('[apiClient] 401 Unauthorized detected. Redirecting to /login...');
+      Cookies.remove('seo_admin_token', { path: '/' });
       localStorage.removeItem('seo_user');
       localStorage.removeItem('seo_admin_token');
       window.location.href = '/login';
