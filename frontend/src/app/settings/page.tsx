@@ -38,6 +38,8 @@ export default function SettingsPage() {
   });
   const [allCpts, setAllCpts] = useState<any[]>([]);
   const [isSyncingCpts, setIsSyncingCpts] = useState(false);
+  const [sites, setSites] = useState<any[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
   const [previewPosts, setPreviewPosts] = useState<any[]>([]);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [selectedCptForPreview, setSelectedCptForPreview] = useState<string | null>(null);
@@ -57,19 +59,22 @@ export default function SettingsPage() {
     fetchSettings();
     
     // Fetch CPTs from all sites to aggregate options
-    const fetchCptOptions = async () => {
+    const fetchSites = async () => {
       try {
-        const { data: sites } = await apiClient.get('/sites');
-        const wpSites = sites.filter((s: any) => s.type === 'wordpress');
+        const { data: allSites } = await apiClient.get('/sites');
+        const wpSites = allSites.filter((s: any) => s.type === 'wordpress');
+        setSites(wpSites);
+        
         if (wpSites.length > 0) {
+          setSelectedSiteId(wpSites[0].id);
           const { data: cpts } = await apiClient.get(`/sites/${wpSites[0].id}/post-types`);
           setAllCpts(cpts);
         }
       } catch (err) {
-        console.error('Failed to fetch CPT options:', err);
+        console.error('Failed to fetch sites or CPT options:', err);
       }
     };
-    fetchCptOptions();
+    fetchSites();
   }, []);
 
   useEffect(() => {
@@ -134,10 +139,8 @@ export default function SettingsPage() {
     setIsPreviewLoading(true);
     setPreviewPosts([]);
     try {
-      const { data: sites } = await apiClient.get('/sites');
-      const wpSites = sites.filter((s: any) => s.type === 'wordpress');
-      if (wpSites.length > 0) {
-        const { data } = await apiClient.get(`/sites/${wpSites[0].id}/posts`, { params: { type: cptSlug, limit: 12 } });
+      if (selectedSiteId) {
+        const { data } = await apiClient.get(`/sites/${selectedSiteId}/posts`, { params: { type: cptSlug, limit: 12 } });
         setPreviewPosts(data);
       }
     } catch (err) {
@@ -452,30 +455,49 @@ export default function SettingsPage() {
            {/* LINKING ENGINE TAB */}
            {activeTab === 'linking' && (
               <div className="card-premium space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                 <div className="border-b border-border pb-6 flex items-start justify-between">
-                    <div>
+                 <div className="border-b border-border pb-6 flex items-start justify-between gap-6">
+                    <div className="flex-1">
                        <h3 className="font-bold text-foreground text-lg">Internal Linking Engine</h3>
-                       <p className="text-sm text-muted-foreground">Select which content types should be used as sources for internal internal linking.</p>
+                       <p className="text-sm text-muted-foreground">Select which content types from your websites should be used as sources for internal internal linking.</p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={async () => {
-                        setIsSyncingCpts(true);
-                        try {
-                          const { data: sites } = await apiClient.get('/sites');
-                          const wpSites = sites.filter((s: any) => s.type === 'wordpress');
-                          if (wpSites.length > 0) {
-                            const { data: cpts } = await apiClient.get(`/sites/${wpSites[0].id}/post-types`);
+                    
+                    <div className="flex items-center gap-3">
+                      <select 
+                        value={selectedSiteId}
+                        onChange={async (e) => {
+                          const id = e.target.value;
+                          setSelectedSiteId(id);
+                          setIsSyncingCpts(true);
+                          try {
+                            const { data: cpts } = await apiClient.get(`/sites/${id}/post-types`);
                             setAllCpts(cpts);
-                            toast.success('Graphed available CPTs from WordPress');
-                          }
-                        } finally { setIsSyncingCpts(false); }
-                      }}
-                      isLoading={isSyncingCpts}
-                    >
-                      <RefreshCw className="w-3.5 h-3.5 mr-2" /> Graph CPTs
-                    </Button>
+                          } catch { toast.error('Failed to switch site logic'); }
+                          finally { setIsSyncingCpts(false); }
+                        }}
+                        className="bg-secondary border border-border rounded-xl px-4 py-2 text-sm text-foreground focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                      >
+                        {sites.map((s: any) => (
+                          <option key={s.id} value={s.id}>{s.name.length > 20 ? s.name.substring(0, 20) + '...' : s.name}</option>
+                        ))}
+                      </select>
+
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={async () => {
+                          if (!selectedSiteId) return;
+                          setIsSyncingCpts(true);
+                          try {
+                            const { data: cpts } = await apiClient.get(`/sites/${selectedSiteId}/post-types`);
+                            setAllCpts(cpts);
+                            toast.success('Synced structure from live site');
+                          } finally { setIsSyncingCpts(false); }
+                        }}
+                        isLoading={isSyncingCpts}
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 mr-2" /> Sync
+                      </Button>
+                    </div>
                  </div>
 
                  <div className="space-y-6">
