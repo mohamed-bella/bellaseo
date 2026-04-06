@@ -19,169 +19,205 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
 
-  /* Exponential Easing - Motion Design SKILLS */
+  /* Easing curves */
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-spring: cubic-bezier(0.68, -0.6, 0.32, 1.6);
 }
 
 :root {
-  /* Airbnb Minimalist Palette */
-  --background: #f7f7f7; 
-  --foreground: #222222;
-  
-  --card: #ffffff;
-  --card-foreground: #222222;
-  
-  --popover: #ffffff;
-  --popover-foreground: #222222;
-  
-  /* Airbnb Rose Primary */
-  --primary: #FF385C; 
-  --primary-foreground: #ffffff;
-  
-  /* Neutral Grays */
-  --secondary: #ebebeb;
-  --secondary-foreground: #222222;
-  
-  --muted: #f7f7f7;
-  --muted-foreground: #717171;
-  
-  /* Airbnb Borders */
-  --border: #dddddd;
-  --input: #b0b0b0;
-  --ring: #FF385C;
-  
+  /* ── SEMrush Light Palette ───────────────────────────── */
+  --background: #F7F8FA;        /* Page background — light gray  */
+  --foreground: #1A1D23;        /* Primary text — near black      */
+
+  --sidebar: #FFFFFF;           /* Sidebar — pure white           */
+
+  --card: #FFFFFF;
+  --card-foreground: #1A1D23;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1D23;
+
+  /* Orange — SEMrush signature */
+  --primary: #FF642D;
+  --primary-foreground: #FFFFFF;
+  --primary-rgb: 255, 100, 45;
+
+  /* Secondary surfaces */
+  --secondary: #FFFFFF;
+  --secondary-foreground: #1A1D23;
+
+  --muted: #FFFFFF;
+  --muted-foreground: #6B7280;
+
   /* Semantic */
-  --destructive: #c13515;
-  --destructive-foreground: #ffffff;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --success: #10B981;
+  --warning: #F59E0B;
 
-  /* RGB version of primary for rgba support */
-  --primary-rgb: 255, 56, 92;
+  /* Borders & inputs */
+  --border: #E5E8EB;
+  --input: #E5E8EB;
+  --ring: #FF642D;
 
-  /* Radius (Airbnb standard is generally softer but clean) */
-  --radius: 0.75rem;
+  /* Shape */
+  --radius: 0.5rem;
 }
 
-.dark {
-  /* Dark mode equivalent (Airbnb-ish dark) */
-  --background: #111111;
-  --foreground: #f7f7f7;
-
-  --card: #222222;
-  --card-foreground: #f7f7f7;
-  
-  --popover: #222222;
-  --popover-foreground: #f7f7f7;
-  
-  --primary: #FF385C;
-  --primary-foreground: #ffffff;
-  
-  --secondary: #333333;
-  --secondary-foreground: #f7f7f7;
-  
-  --muted: #1a1a1a;
-  --muted-foreground: #a3a3a3;
-  
-  --destructive: #df4444;
-  --destructive-foreground: #ffffff;
-  
-  --border: #333333;
-  --input: #444444;
-  --ring: #FF385C;
-}
-
+/* ── Base ─────────────────────────────────────────────── */
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Circular, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@utility glass {
-  background-color: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-}
-
-.dark .glass {
-  background-color: rgba(34, 34, 34, 0.8);
-}
-
-@utility glass-premium {
-  @apply glass;
-}
-
-@utility grainy {
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    z-index: 50;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  }
-}
-
+/* ── Nav Items ────────────── */
 @utility nav-item {
-  @apply flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary;
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-150 text-[#6B7280] hover:text-[#1A1D23] hover:bg-[#F3F4F6] text-sm font-medium;
 }
 
 @utility nav-item-active {
-  @apply bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary;
+  @apply bg-[#10B981] text-white hover:bg-[#059669] hover:text-white shadow-sm;
 }
 
+/* ── Card (flat enterprise style) ────────────────────── */
 @utility card-premium {
-  @apply bg-card rounded-2xl p-4 sm:p-6 border border-border relative overflow-hidden;
-  /* Removed hover transforms and shadows as per user request */
-  
+  @apply bg-white rounded-lg p-5 border border-[#E5E8EB] relative overflow-hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s ease;
+
   &:hover {
-    @apply border-foreground/20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 }
 
+/* ── Primary Button ───────────────────────────────────── */
 @utility btn-primary {
-  @apply relative inline-flex items-center justify-center bg-primary text-primary-foreground font-semibold rounded-lg px-4 sm:px-6 py-2 sm:py-3 transition-opacity duration-200 ease-in-out text-sm sm:text-base;
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring;
-  @apply hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  @apply relative inline-flex items-center justify-center bg-primary text-white font-semibold rounded-md px-4 py-2 text-sm transition-all duration-150;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  @apply hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  box-shadow: 0 1px 2px rgba(255, 100, 45, 0.25);
 }
 
-@keyframes mesh-flow {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 100% 100%; }
+/* ── Secondary Button ─────────────────────────────────── */
+@utility btn-secondary {
+  @apply relative inline-flex items-center justify-center bg-white text-[#1A1D23] font-semibold rounded-md px-4 py-2 text-sm border border-[#E5E8EB] transition-all duration-150;
+  @apply hover:bg-gray-50 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-@keyframes glow {
-  from {
-    box-shadow: 0 0 20px -10px var(--color-primary);
+/* ── Data Badge ───────────────────────────────────────── */
+@utility badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold;
+}
+
+@utility badge-orange {
+  @apply badge bg-orange-50 text-orange-600;
+}
+
+@utility badge-green {
+  @apply badge bg-green-50 text-green-600;
+}
+
+@utility badge-red {
+  @apply badge bg-red-50 text-red-600;
+}
+
+@utility badge-blue {
+  @apply badge bg-blue-50 text-blue-600;
+}
+
+@utility badge-gray {
+  @apply badge bg-gray-100 text-gray-600;
+}
+
+/* ── Stat Card (like SEMrush metric blocks) ───────────── */
+@utility stat-card {
+  @apply bg-white rounded-lg border border-[#E5E8EB] p-5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Table ────────────────────────────────────────────── */
+@utility data-table {
+  @apply w-full text-sm text-left bg-white;
+
+  & thead tr {
+    @apply bg-white border-b border-[#E5E8EB];
   }
-  to {
-    box-shadow: 0 0 40px -5px var(--color-primary);
+
+  & thead th {
+    @apply px-4 py-3 text-xs font-semibold text-[#6B7280] uppercase tracking-wider;
   }
+
+  & tbody tr {
+    @apply bg-white border-b border-[#E5E8EB] transition-colors duration-100;
+
+    &:hover {
+      @apply bg-[#F7F8FA];
+    }
+
+    &:last-child {
+      @apply border-b-0;
+    }
+  }
+
+  & tbody td {
+    @apply px-4 py-3 text-[#1A1D23];
+  }
+}
+
+/* ── Section Header ───────────────────────────────────── */
+@utility section-header {
+  @apply flex items-center justify-between mb-5;
+
+  & h2 {
+    @apply text-base font-semibold text-[#1A1D23];
+  }
+}
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse-slow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.98); }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.3s var(--ease-out-quart) both;
 }
 
 .animate-pulse-slow {
-  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-slow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full hover:bg-muted-foreground/30 transition-colors;
+  background: #D1D5DB;
+  border-radius: 99px;
+
+  &:hover {
+    background: #9CA3AF;
+  }
 }

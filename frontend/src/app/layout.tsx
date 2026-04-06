@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import DashboardWrapper from "@/components/layout/DashboardWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 import { BRANDING } from "@/config/branding";
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({ 
-  subsets: ["latin"], 
-  weight: ["400", "500", "600", "700"] 
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -24,20 +25,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${plusJakartaSans.className} min-h-screen bg-background flex overflow-hidden antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Toaster 
-            position="top-right" 
-            richColors 
-            closeButton 
-            expand={false} 
-            toastOptions={{ 
-              style: { 
-                background: 'var(--background)', 
-                border: '1px solid var(--border)', 
-                color: 'var(--foreground)' 
-              } 
-            }} 
+      <body suppressHydrationWarning className={`${inter.className} min-h-screen bg-background flex overflow-hidden antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            expand={false}
+            toastOptions={{
+              style: {
+                background: '#FFFFFF',
+                border: '1px solid #E5E8EB',
+                color: '#1A1D23',
+                fontSize: '13px',
+              }
+            }}
           />
           <DashboardWrapper>
             {children}
@@ -47,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+

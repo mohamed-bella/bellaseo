@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
-import { Eye, EyeOff, Lock, User, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { BRANDING } from '@/config/branding';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +24,6 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // 1. Validation check for missing env vars
       if (typeof window !== 'undefined' && 
          (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') || 
           !process.env.NEXT_PUBLIC_SUPABASE_URL)) {
@@ -39,10 +37,8 @@ export default function LoginPage() {
 
       if (error || !data.user) throw error;
       
-      // Store token for backend compatibility
       Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, secure: true, path: '/' });
 
-      // Fetch precise role from Supabase for UI state (SAFE: default to editor if row missing)
       let role: 'admin' | 'editor' = 'editor';
       try {
         const { data: profile } = await supabase
@@ -64,8 +60,6 @@ export default function LoginPage() {
       localStorage.setItem('seo_user', JSON.stringify(userPayload));
 
       toast.success('Login successful! Redirecting...');
-      
-      // Force Hard Reload
       window.location.href = '/';
     } catch (err: any) {
       toast.error(err.message || 'Invalid credentials');
@@ -75,138 +69,115 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row relative overflow-hidden">
-      
-      {/* LEFT COLUMN: Brand Hero (Hidden on mobile) */}
-      <div className="hidden md:flex md:w-1/2 relative bg-[#0a0a0a] border-r border-border items-center justify-center p-12 overflow-hidden">
-        {/* Animated Background Mesh */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,107,0,0.15),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(59,130,246,0.1),transparent_40%)]" />
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 pointer-events-none" />
-        
-        {/* Content */}
-        <div className="relative z-10 max-w-lg animate-in slide-in-from-left-8 fade-in duration-1000 ease-out-quart">
-           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-2xl shadow-primary/20 mb-10 rotate-3">
-              <ShieldCheck className="w-10 h-10 text-white" />
-           </div>
-           
-           <h2 className="text-5xl font-black text-white tracking-tight leading-[1.1] mb-6">
-             The Future of <span className="text-primary">Search Dominance</span> Starts Here.
-           </h2>
-           
-           <p className="text-lg text-slate-400 leading-relaxed mb-8 font-medium">
-             Unlock enterprise-grade SEO automation, predictive analytics, and content generation powered by advanced AI. Manage your entire digital empire in one secure workspace.
-           </p>
-
-           <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
-              <div>
-                <p className="text-3xl font-black text-white">99.9%</p>
-                <p className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-bold">System Uptime</p>
-              </div>
-              <div>
-                <p className="text-3xl font-black text-white">2.5M+</p>
-                <p className="text-xs text-slate-500 uppercase tracking-widest mt-1 font-bold">Articles Generated</p>
-              </div>
-           </div>
-        </div>
-
-        {/* Decorative corner glow */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/20 blur-[120px] rounded-full" />
-      </div>
-
-      {/* RIGHT COLUMN: Login Form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative">
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
-        
-        <div className="w-full max-w-[420px] relative z-10">
-          
-          <div className="mb-10 block md:hidden text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
-              <ShieldCheck className="w-7 h-7 text-primary" />
+    <div className="flex min-h-screen bg-white">
+      {/* ── LEFT COLUMN: Login Form ── */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24">
+        <div className="max-w-md w-full mx-auto">
+          {/* Brand Header */}
+          <div className="mb-10 block">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-[#FF642D] shadow-sm mb-6">
+              <ShieldCheck className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Sign In</h1>
+            <h1 className="text-3xl font-bold text-[#1A1D23] tracking-tight mb-2">Welcome Back</h1>
+            <p className="text-sm font-medium text-[#6B7280]">Sign in to your automated SEO workspace.</p>
           </div>
 
-          <div className="mb-10 hidden md:block">
-            <h1 className="text-4xl font-black text-foreground tracking-tight mb-3">Secure Portal</h1>
-            <p className="text-muted-foreground font-medium italic">Enter your workspace credentials to continue.</p>
-          </div>
-
-          {/* Form Container */}
-          <div className="card-premium p-8 animate-in slide-in-from-bottom-8 fade-in duration-700">
-            <form onSubmit={handleLogin} className="space-y-6">
-              
-              {/* Email Input */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Email Address</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-muted-foreground/60" />
-                  </div>
-                  <input
-                    type="email"
-                    placeholder="admin@seo-saas.com"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-secondary/30 border border-border focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-2xl pl-11 pr-4 py-4 text-sm text-foreground transition-all placeholder:text-muted-foreground/40 outline-none font-medium"
-                    disabled={isLoading}
-                    autoComplete="email"
-                    required
-                  />
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1A1D23] uppercase tracking-wider">Email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-[#9CA3AF]" />
                 </div>
+                <input
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-white border border-[#E5E8EB] focus:border-[#FF642D] focus:ring-2 focus:ring-[#FF642D]/20 rounded-md pl-10 pr-4 py-2.5 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none"
+                  disabled={isLoading}
+                  autoComplete="email"
+                  required
+                />
               </div>
+            </div>
 
-              {/* Password Input */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-muted-foreground uppercase tracking-widest">Master Password</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-4 w-4 text-muted-foreground/60" />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-secondary/30 border border-border focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-2xl pl-11 pr-12 py-4 text-sm text-foreground transition-all placeholder:text-muted-foreground/40 outline-none font-medium"
-                    disabled={isLoading}
-                    autoComplete="current-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1A1D23] uppercase tracking-wider">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-[#9CA3AF]" />
                 </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white border border-[#E5E8EB] focus:border-[#FF642D] focus:ring-2 focus:ring-[#FF642D]/20 rounded-md pl-10 pr-10 py-2.5 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none"
+                  disabled={isLoading}
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
+            </div>
 
-              <Button
-                type="submit"
-                className="w-full py-7 mt-2 rounded-2xl text-[15px] font-black shadow-xl shadow-primary/10 hover:shadow-primary/20 active:scale-95 transition-all"
-                isLoading={isLoading}
-              >
-                Enter Workspace
-              </Button>
-              
-            </form>
-          </div>
-          
+            <Button
+              type="submit"
+              className="w-full py-2.5 mt-2"
+              isLoading={isLoading}
+            >
+              Sign In
+            </Button>
+          </form>
+
           {/* Footer info */}
-          <div className="text-center mt-10 space-y-4">
-             <div className="flex items-center justify-center gap-6 opacity-30">
-                <div className="w-12 h-px bg-foreground" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground">Verified by Supabase</span>
-                <div className="w-12 h-px bg-foreground" />
-             </div>
-             <p className="text-[11px] text-muted-foreground font-bold opacity-60">
-               If you lost your credentials, please contact your system administrator.
-             </p>
+          <div className="mt-12 text-sm text-[#9CA3AF] flex items-center gap-2">
+             <ShieldCheck className="w-4 h-4" />
+             Authenticated securely via Supabase Auth
           </div>
         </div>
       </div>
+
+      {/* ── RIGHT COLUMN: Brand/Aesthetic Pattern (Hidden on Mobile) ── */}
+      <div className="hidden lg:flex w-1/2 bg-[#F3F4F6] relative items-center justify-center p-12 overflow-hidden border-l border-[#E5E8EB]">
+        {/* Subtle grid pattern background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#E5E8EB_1px,transparent_1px),linear-gradient(to_bottom,#E5E8EB_1px,transparent_1px)] bg-[size:40px_40px] opacity-60" />
+        
+        <div className="relative z-10 max-w-lg bg-white p-10 rounded-xl shadow-xl border border-[#E5E8EB]">
+          <h2 className="text-2xl font-bold text-[#1A1D23] mb-6">System Status: Optimal</h2>
+          <div className="space-y-4">
+            {[
+              { label: 'Automated Publishing Pipeline', status: 'Operational' },
+              { label: 'AI Generation Clusters', status: 'Online' },
+              { label: 'Internal Link Engine', status: 'Optimized' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between p-4 bg-[#F7F8FA] rounded-md border border-[#E5E8EB]">
+                <span className="text-sm font-semibold text-[#1A1D23]">{item.label}</span>
+                <span className="flex items-center gap-2 text-xs font-bold text-[#10B981] bg-emerald-50 px-2.5 py-1.5 rounded-md border border-emerald-100">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {item.status}
+                </span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-[#E5E8EB]">
+            <p className="text-sm font-medium text-[#6B7280] leading-relaxed">
+              Enterprise SEO infrastructure running on strict, data-driven automation. Your competitive advantage is ready.
+            </p>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

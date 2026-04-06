@@ -42,12 +42,12 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
   // Otherwise, render full dashboard layout
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="flex h-screen w-full overflow-hidden bg-[#E5E7EB]">
       <Sidebar dynamicBranding={branding} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full bg-background custom-scrollbar scroll-smooth">
-          <div className="w-full min-h-full p-4 sm:p-6 md:p-8 lg:p-10 animate-in fade-in zoom-in-[0.98] duration-700 ease-out-quart overflow-x-hidden">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto w-full bg-[#E5E7EB] p-4 sm:p-6">
+          <div className="max-w-[1600px] mx-auto w-full min-h-[calc(100vh-8rem)] bg-white rounded-xl shadow-sm border border-[#E5E8EB] p-6 md:p-8 animate-fade-up overflow-x-hidden">
             {children}
           </div>
         </main>

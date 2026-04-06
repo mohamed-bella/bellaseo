@@ -4,85 +4,62 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
+  LayoutDashboard,
+  BarChart3,
+  FolderKanban,
+  Hash,
+  FileText,
+  FlaskConical,
+  Workflow,
+  Globe,
+  PenSquare,
+  Radar,
+  Settings,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
-  Zap,
-  ArrowRight,
+  LogOut,
+  User,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import { 
-  FcHome, 
-  FcLineChart, 
-  FcFolder, 
-  FcKey, 
-  FcOpenedFolder, 
-  FcMindMap, 
-  FcFlashOn, 
-  FcGlobe, 
-  FcAlarmClock, 
-  FcSettings, 
-  FcApproval,
-  FcRadarPlot,
-  FcTemplate,
-  FcBusinessman
-} from 'react-icons/fc';
 import { useAppStore } from '@/state/store';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { BRANDING } from '@/config/branding';
+import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const colorMap: Record<string, { bg: string; ring: string; shadow: string; bar: string }> = {
-  'blue': { bg: 'bg-blue-500/10', ring: 'ring-blue-500/50', shadow: 'shadow-[0_0_10px_theme(colors.blue.500)]', bar: 'bg-blue-500' },
-  'purple': { bg: 'bg-purple-500/10', ring: 'ring-purple-500/50', shadow: 'shadow-[0_0_10px_theme(colors.purple.500)]', bar: 'bg-purple-500' },
-  'emerald': { bg: 'bg-emerald-500/10', ring: 'ring-emerald-500/50', shadow: 'shadow-[0_0_10px_theme(colors.emerald.500)]', bar: 'bg-emerald-500' },
-  'pink': { bg: 'bg-pink-500/10', ring: 'ring-pink-500/50', shadow: 'shadow-[0_0_10px_theme(colors.pink.500)]', bar: 'bg-pink-500' },
-  'rose': { bg: 'bg-rose-500/10', ring: 'ring-rose-500/50', shadow: 'shadow-[0_0_10px_theme(colors.rose.500)]', bar: 'bg-rose-500' },
-  'red': { bg: 'bg-red-500/10', ring: 'ring-red-500/50', shadow: 'shadow-[0_0_10px_theme(colors.red.500)]', bar: 'bg-red-500' },
-  'orange': { bg: 'bg-orange-500/10', ring: 'ring-orange-500/50', shadow: 'shadow-[0_0_10px_theme(colors.orange.500)]', bar: 'bg-orange-500' },
-  'amber': { bg: 'bg-amber-500/10', ring: 'ring-amber-500/50', shadow: 'shadow-[0_0_10px_theme(colors.amber.500)]', bar: 'bg-amber-500' },
-  'cyan': { bg: 'bg-cyan-500/10', ring: 'ring-cyan-500/50', shadow: 'shadow-[0_0_10px_theme(colors.cyan.500)]', bar: 'bg-cyan-500' },
-  'teal': { bg: 'bg-teal-500/10', ring: 'ring-teal-500/50', shadow: 'shadow-[0_0_10px_theme(colors.teal.500)]', bar: 'bg-teal-500' },
-  'slate': { bg: 'bg-slate-500/10', ring: 'ring-slate-500/50', shadow: 'shadow-[0_0_10px_theme(colors.slate.500)]', bar: 'bg-slate-500' },
-};
-
 const navGroups = [
   {
-    label: 'Command Center',
+    label: 'Overview',
     items: [
-      { name: 'Dashboard', icon: FcHome, href: '/', themeColor: 'blue' },
-      { name: 'Analytics', icon: FcLineChart, href: '/analytics', themeColor: 'purple' },
-    ]
+      { name: 'Dashboard',  icon: LayoutDashboard, href: '/' },
+      { name: 'Analytics',  icon: BarChart3,       href: '/analytics' },
+    ],
   },
   {
-    label: 'Content Pipeline',
+    label: 'Content',
     items: [
-      { name: 'Projects', icon: FcFolder, href: '/campaigns', themeColor: 'emerald' },
-      { name: 'Keywords', icon: FcKey, href: '/keywords', themeColor: 'pink' },
-      { name: 'Articles', icon: FcOpenedFolder, href: '/articles', themeColor: 'rose' },
-      { name: 'Content Lab', icon: FcFlashOn, href: '/content-lab', themeColor: 'amber' },
-      { name: 'Auto-Publish', icon: FcFlashOn, href: '/workflows', themeColor: 'orange' },
-    ]
+      { name: 'Projects',      icon: FolderKanban, href: '/campaigns'    },
+      { name: 'Keywords',      icon: Hash,         href: '/keywords'     },
+      { name: 'Articles',      icon: FileText,     href: '/articles'     },
+      { name: 'Content Lab',   icon: FlaskConical, href: '/content-lab'  },
+      { name: 'Auto-Publish',  icon: Workflow,     href: '/workflows'    },
+    ],
   },
   {
     label: 'Platform',
     items: [
-      { name: 'Integrations', icon: FcGlobe, href: '/sites', themeColor: 'cyan' },
-      { name: 'Article Studio', icon: FcTemplate, href: '/article-config', themeColor: 'purple' },
-      { name: 'Lead Radar', icon: FcRadarPlot, href: '/radar', themeColor: 'red' },
-      { name: 'Settings', icon: FcSettings, href: '/settings', themeColor: 'slate' },
-    ]
-  }
-];
-
-const STEPS = [
-  { label: 'Connect a website', href: '/sites' },
-  { label: 'Create a project', href: '/campaigns' },
-  { label: 'Add keywords & generate', href: '/keywords' },
+      { name: 'Integrations',    icon: Globe,       href: '/sites'          },
+      { name: 'Article Studio',  icon: PenSquare,   href: '/article-config' },
+      { name: 'Lead Radar',      icon: Radar,       href: '/radar'          },
+      { name: 'Settings',        icon: Settings,    href: '/settings'       },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -90,160 +67,140 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ dynamicBranding }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname  = usePathname();
+  const router    = useRouter();
   const { isSidebarOpen, setSidebarOpen } = useAppStore();
-  const [role, setRole] = useState<'admin' | 'editor'>('admin');
+  const [username, setUsername] = useState('Admin');
 
   useEffect(() => {
-    // If screen is mobile, close sidebar by default or on navigation
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setSidebarOpen(false);
     }
-    
     try {
       const userStr = localStorage.getItem('seo_user');
       if (userStr) {
-        const user = JSON.parse(userStr);
-        if (user.role) setRole(user.role);
+        const u = JSON.parse(userStr);
+        if (u.username) setUsername(u.username);
       }
-    } catch (e) { /* ignore */ }
-  }, [setSidebarOpen, pathname]); // Run on mount and on navigation
+    } catch { /* ignore */ }
+  }, [setSidebarOpen, pathname]);
 
-  // No need for a flat visibleNavItems array, as we map over groups
-  const brandName = dynamicBranding?.name || BRANDING.name;
-  const companyName = dynamicBranding?.companyName || BRANDING.companyName;
-  const iconName = dynamicBranding?.iconName || BRANDING?.logo?.iconName || 'TrendingUp';
+  const handleLogout = () => {
+    Cookies.remove('seo_admin_token');
+    localStorage.removeItem('seo_admin_token');
+    localStorage.removeItem('seo_user');
+    window.location.href = '/login';
+  };
+
+  const brandName  = dynamicBranding?.name        || BRANDING.name;
+  const iconName   = dynamicBranding?.iconName     || BRANDING?.logo?.iconName || 'TrendingUp';
   const DynamicIcon = (LucideIcons as any)[iconName] || TrendingUp;
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile backdrop */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 h-screen shrink-0 transition-all duration-500 ease-out-quart flex flex-col bg-card border-r border-border md:sticky md:translate-x-0',
-          isSidebarOpen ? 'translate-x-0 w-64 shadow-2xl md:shadow-none' : '-translate-x-full md:w-20 md:translate-x-0 overflow-hidden'
+          'fixed inset-y-0 left-0 z-50 h-screen flex flex-col bg-white border-r border-[#E5E8EB] transition-all duration-300 ease-out-quart md:sticky md:translate-x-0',
+          isSidebarOpen
+            ? 'translate-x-0 w-[220px] shadow-xl md:shadow-none'
+            : '-translate-x-full md:w-[64px] md:translate-x-0',
         )}
       >
-      {/* Logo */}
-      <div className="flex items-center gap-3 p-4 md:p-6 shrink-0 h-[80px]">
-        <div className="bg-primary shadow-lg shadow-primary/20 p-2 rounded-xl shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-105 ease-out-quart">
-          <DynamicIcon className="w-5 h-5 text-white" />
-        </div>
-        {isSidebarOpen && (
-          <div className="animate-in fade-in duration-300 ease-out-quart">
-            <span className="font-bold text-lg tracking-tight text-foreground block leading-none">
+        {/* ── Logo ───────────────────────────────────────────── */}
+        <div className="flex items-center gap-2.5 px-4 h-[56px] border-b border-[#E5E8EB] shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#FF642D] flex items-center justify-center shrink-0 shadow-sm">
+            <DynamicIcon className="w-4 h-4 text-white" />
+          </div>
+          {isSidebarOpen && (
+            <span className="font-bold text-[15px] tracking-tight text-[#1A1D23] truncate leading-none">
               {brandName}
             </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-1 block">
-              {companyName}
-            </span>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 md:px-4 py-2 space-y-2 custom-scrollbar">
-        {navGroups.map((group) => {
-          const groupVisibleItems = group.items;
-          if (groupVisibleItems.length === 0) return null;
-          
-          return (
-            <div key={group.label} className="mb-6">
+        {/* ── Navigation ─────────────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+          {navGroups.map((group) => (
+            <div key={group.label}>
               {isSidebarOpen && (
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/50 px-3 pb-3 pt-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF] px-3 mb-1 mt-1">
                   {group.label}
                 </p>
               )}
-              <div className="space-y-1">
-                {groupVisibleItems.map((item) => {
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     (item.href !== '/' && pathname.startsWith(item.href));
-                    
-                  const styles = colorMap[item.themeColor];
+                  const Icon = item.icon;
 
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-3 rounded-2xl transition-[background-color,color,box-shadow,transform] duration-300 ease-out-quart group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        isActive
-                          ? `${styles.bg} text-foreground shadow-sm ring-1 ${styles.ring} font-black`
-                          : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
-                      )}
                       title={!isSidebarOpen ? item.name : undefined}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 group',
+                        isActive
+                          ? 'bg-[#10B981] text-white shadow-sm'
+                          : 'text-[#6B7280] hover:text-[#1A1D23] hover:bg-[#F3F4F6]',
+                      )}
                     >
-                      <div className={cn("p-1.5 rounded-xl flex items-center justify-center transition-all", isActive ? "bg-white shadow-sm dark:bg-black/20" : "bg-secondary group-hover:bg-white dark:group-hover:bg-black/20 group-hover:shadow-sm")}>
-                         <item.icon className="w-5 h-5 flex-shrink-0" />
-                      </div>
-
+                      <Icon
+                        className={cn(
+                          'shrink-0 transition-colors duration-150',
+                          isSidebarOpen ? 'w-4 h-4' : 'w-5 h-5',
+                          isActive ? 'text-white' : 'text-[#9CA3AF] group-hover:text-[#6B7280]',
+                        )}
+                      />
                       {isSidebarOpen && (
-                        <div className="min-w-0 flex-1">
-                          <span
-                            className={cn(
-                              'text-[13px] block leading-tight transition-colors duration-200 tracking-wide',
-                              isActive ? 'text-foreground font-black' : 'font-bold'
-                            )}
-                          >
-                            {item.name}
-                          </span>
-                        </div>
+                        <span className="truncate">{item.name}</span>
                       )}
                     </Link>
                   );
                 })}
               </div>
             </div>
-          );
-        })}
-      </nav>
+          ))}
+        </nav>
 
-      {/* Quick-start guide strip (only when sidebar is open) */}
-      {isSidebarOpen && (
-        <div className="shrink-0 mx-3 mb-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <p className="text-[9px] font-black uppercase tracking-widest text-primary mb-2.5 flex items-center gap-1.5">
-            <Zap className="w-3 h-3" /> Getting Started
-          </p>
-          <div className="space-y-1.5">
-            {STEPS.map((step, i) => (
-              <Link
-                key={step.href}
-                href={step.href}
-                className="flex items-center gap-2 group"
+        {/* ── User Footer ────────────────────────────────────── */}
+        {isSidebarOpen && (
+          <div className="shrink-0 border-t border-[#E5E8EB] p-3">
+            <div className="flex items-center gap-2.5 px-1">
+              <div className="w-7 h-7 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
+                <User className="w-3.5 h-3.5 text-[#FF642D]" />
+              </div>
+              <span className="text-[13px] font-medium text-[#1A1D23] flex-1 truncate">{username}</span>
+              <button
+                onClick={handleLogout}
+                title="Log out"
+                className="p-1.5 rounded-md hover:bg-red-50 text-[#9CA3AF] hover:text-red-500 transition-colors"
               >
-                <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-[9px] font-bold flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                  {i + 1}
-                </span>
-                <span className="text-[11px] text-muted-foreground group-hover:text-foreground transition-colors flex-1 truncate font-bold">
-                  {step.label}
-                </span>
-                <ArrowRight className="w-3 h-3 text-muted-foreground/50 group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100" />
-              </Link>
-            ))}
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Toggle Button */}
-      <button
-        onClick={() => setSidebarOpen(!isSidebarOpen)}
-        className="shrink-0 p-4 flex items-center justify-center hover:bg-secondary text-muted-foreground transition-colors border-t border-border"
-        title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-      >
-        {isSidebarOpen ? (
-          <ChevronLeft className="w-4 h-4" />
-        ) : (
-          <ChevronRight className="w-4 h-4" />
         )}
-      </button>
+
+        {/* ── Collapse Toggle ─────────────────────────────────── */}
+        <button
+          onClick={() => setSidebarOpen(!isSidebarOpen)}
+          className="shrink-0 flex items-center justify-center h-10 border-t border-[#E5E8EB] text-[#9CA3AF] hover:text-[#6B7280] hover:bg-gray-50 transition-colors"
+          title={isSidebarOpen ? 'Collapse' : 'Expand'}
+        >
+          {isSidebarOpen
+            ? <ChevronLeft  className="w-4 h-4" />
+            : <ChevronRight className="w-4 h-4" />}
+        </button>
       </aside>
     </>
   );
