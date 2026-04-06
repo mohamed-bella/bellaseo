@@ -4,12 +4,18 @@
  */
 const axios = require('axios');
 
+const BROWSER_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
 /**
- * Get auth header from site credentials
+ * Get auth header from site credentials with browser spoofing
  */
 function getAuthHeader(creds) {
   const token = Buffer.from(`${creds.username}:${creds.app_password}`).toString('base64');
-  return { Authorization: `Basic ${token}` };
+  return { 
+    Authorization: `Basic ${token}`,
+    'User-Agent': BROWSER_USER_AGENT,
+    'Accept': 'application/json, text/plain, */*',
+  };
 }
 
 /**
@@ -31,7 +37,11 @@ function extensionFromContentType(contentType) {
 async function uploadFeaturedImage(apiUrl, creds, imageUrl, slug = 'featured-image') {
   try {
     // 1. Download the image — capture actual content-type from response headers
-    const imageResp = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 20000 });
+    const imageResp = await axios.get(imageUrl, { 
+      responseType: 'arraybuffer', 
+      timeout: 20000,
+      headers: { 'User-Agent': BROWSER_USER_AGENT }
+    });
     const contentType = imageResp.headers['content-type'] || 'image/jpeg';
     const ext = extensionFromContentType(contentType);
 
