@@ -38,55 +38,10 @@ const io = new Server(httpServer, {
 // Attach io to app so controllers can emit events
 app.set('io', io);
 
-// ─── Console Interceptor for Real-Time Terminal ────────────────────────────────
-const originalLog = console.log;
-const originalWarn = console.warn;
-const originalError = console.error;
-
-// Keep the last 1000 logs in memory
-const terminalHistory = [];
-const MAX_LOGS = 1000;
-
-function formatArgs(args) {
-  return args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ');
-}
-
-function addToHistory(level, source, message) {
-  const logEntry = { level, source, message, timestamp: new Date().toISOString() };
-  terminalHistory.push(logEntry);
-  if (terminalHistory.length > MAX_LOGS) {
-    terminalHistory.shift();
-  }
-  return logEntry;
-}
-
-console.log = function (...args) {
-  originalLog.apply(console, args);
-  const log = addToHistory('info', 'backend', formatArgs(args));
-  io.emit('system:log', log);
-};
-
-console.warn = function (...args) {
-  originalWarn.apply(console, args);
-  const log = addToHistory('warn', 'backend', formatArgs(args));
-  io.emit('system:log', log);
-};
-
-console.error = function (...args) {
-  originalError.apply(console, args);
-  const log = addToHistory('error', 'backend', formatArgs(args));
-  io.emit('system:log', log);
-};
-// ──────────────────────────────────────────────────────────────────────────────
-
 io.on('connection', (socket) => {
-  originalLog(`[ws] Client connected: ${socket.id}`);
-  
-  // Sync the current terminal buffer to the new client
-  socket.emit('terminal:history', terminalHistory);
-  
+  console.log(`[ws] Client connected: ${socket.id}`);
   socket.on('disconnect', () => {
-    originalLog(`[ws] Client disconnected: ${socket.id}`);
+    console.log(`[ws] Client disconnected: ${socket.id}`);
   });
 });
 

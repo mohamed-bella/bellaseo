@@ -20,9 +20,6 @@ import {
   TrendingUp,
   LogOut,
   User,
-  Users,
-  LineChart,
-  Terminal,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useAppStore } from '@/state/store';
@@ -52,7 +49,6 @@ const navGroups = [
       { name: 'Articles',      icon: FileText,     href: '/articles'     },
       { name: 'Content Lab',   icon: FlaskConical, href: '/content-lab'  },
       { name: 'Auto-Publish',  icon: Workflow,     href: '/workflows'    },
-      { name: 'System Logs',   icon: Terminal,     href: '/system-logs'  },
     ],
   },
   {
