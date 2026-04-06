@@ -351,12 +351,70 @@ export default function ProjectStudioPage() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Articles Per Run</label>
                     <input 
                       type="number"
+                      min={1}
+                      max={20}
                       value={campaign.posts_per_run || 1}
                       onChange={(e) => setCampaign({ ...campaign, posts_per_run: parseInt(e.target.value) })}
                       className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/10"
                     />
                   </div>
                </div>
+
+               {/* ── Scheduled Time ── */}
+               {campaign.schedule_type !== 'manual' && campaign.schedule_type !== 'hourly' && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-border/50">
+                   <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                       Run Time (HH:MM)
+                     </label>
+                     <input
+                       type="time"
+                       value={campaign.cron_time || '09:00'}
+                       onChange={(e) => setCampaign({ ...campaign, cron_time: e.target.value })}
+                       className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/10"
+                     />
+                     <p className="text-[10px] text-muted-foreground font-medium">
+                       The exact time the scheduler will trigger this campaign each day/week.
+                     </p>
+                   </div>
+
+                   <div className="space-y-3">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                       Timezone
+                     </label>
+                     <select
+                       value={campaign.cron_timezone || 'Africa/Casablanca'}
+                       onChange={(e) => setCampaign({ ...campaign, cron_timezone: e.target.value })}
+                       className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/10"
+                     >
+                       <option value="Africa/Casablanca">Africa/Casablanca (GMT+1)</option>
+                       <option value="Europe/Paris">Europe/Paris (GMT+1/+2)</option>
+                       <option value="Europe/London">Europe/London (GMT+0/+1)</option>
+                       <option value="America/New_York">America/New_York (GMT-5/-4)</option>
+                       <option value="America/Los_Angeles">America/Los_Angeles (GMT-8/-7)</option>
+                       <option value="Asia/Dubai">Asia/Dubai (GMT+4)</option>
+                       <option value="Asia/Riyadh">Asia/Riyadh (GMT+3)</option>
+                       <option value="UTC">UTC (GMT+0)</option>
+                     </select>
+                   </div>
+                 </div>
+               )}
+
+               {campaign.schedule_type === 'hourly' && (
+                 <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                   <p className="text-[11px] font-bold">
+                     ⚡ Hourly runs trigger at the start of every hour automatically — no time selection needed.
+                   </p>
+                 </div>
+               )}
+
+               {campaign.schedule_type === 'manual' && (
+                 <div className="p-5 rounded-2xl bg-secondary border border-border/50 text-muted-foreground">
+                   <p className="text-[11px] font-bold">
+                     🔒 Manual mode — this campaign will only run when you trigger it from the workspace.
+                   </p>
+                 </div>
+               )}
             </div>
           )}
 

@@ -12,24 +12,40 @@ const API_BASE = `http://localhost:${PORT}/api`;
 
 async function triggerCampaignWorkflows(scheduleType) {
   console.log(`[scheduler] Triggering ${scheduleType} campaigns...`);
+
+  // Get current UTC time
+  const now = new Date();
+  const currentHour   = now.getUTCHours().toString().padStart(2, '0');
+  const currentMinute = now.getUTCMinutes().toString().padStart(2, '0');
+  const currentTime   = `${currentHour}:${currentMinute}`; // e.g. "09:00"
+
   try {
     const { data: campaigns, error } = await supabase.from('campaigns')
-      .select('id')
+      .select('id, cron_time, posts_per_run')
       .eq('status', CAMPAIGN_STATUS.ACTIVE)
       .eq('schedule_type', scheduleType);
 
     if (error) throw error;
 
     for (const campaign of campaigns || []) {
-      // Trigger article generation workflow
+      // For hourly: trigger every campaign regardless of time.
+      // For daily/weekly: only trigger if the campaign's cron_time matches NOW (to the minute).
+      if (scheduleType !== 'hourly') {
+        const targetTime = campaign.cron_time || '09:00';
+        if (targetTime !== currentTime) {
+          console.log(`[scheduler] Skipping campaign ${campaign.id} — scheduled for ${targetTime}, current time is ${currentTime}`);
+          continue;
+        }
+      }
+
       try {
-         await axios.post(`${API_BASE}/workflows/trigger`, {
-            campaign_id: campaign.id,
-            type: 'article_generation'
-         }, {
-            headers: { Authorization: `Bearer ${API_SECRET}` }
-         });
-         console.log(`[scheduler] Triggered workflow for campaign ${campaign.id}`);
+        await axios.post(`${API_BASE}/workflows/trigger`, {
+          campaign_id: campaign.id,
+          type: 'article_generation'
+        }, {
+          headers: { Authorization: `Bearer ${API_SECRET}` }
+        });
+        console.log(`[scheduler] ✅ Triggered workflow for campaign ${campaign.id} (${scheduleType} @ ${currentTime})`);
       } catch (err) {
         console.error(`[scheduler] Failed to trigger campaign ${campaign.id}:`, err.message);
       }
