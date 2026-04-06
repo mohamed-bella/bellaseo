@@ -14,6 +14,7 @@
 
 const supabase        = require('../config/database');
 const aiService       = require('../services/aiService');
+const publishingWorker = require('./publishingWorker');
 const { notifyError, notifyWorkflowComplete } = require('../services/whatsappService');
 const { WORKFLOW_STATUS, KEYWORD_STATUS, ARTICLE_STATUS, LOG_LEVEL } = require('../config/constants');
 
@@ -77,7 +78,7 @@ async function run(workflowId, campaignId, io, keywordIds = null, options = {}) 
             word_count:         generated.word_count,
             featured_image_url: generated.featured_image_url || null,
             research_data:      generated.research_data      || null,
-            status:             ARTICLE_STATUS.DRAFT,
+            status:             ARTICLE_STATUS.APPROVED,
           })
           .select().single();
 
@@ -95,10 +96,12 @@ async function run(workflowId, campaignId, io, keywordIds = null, options = {}) 
       }
     }
 
-    // 5. Mark workflow ready for review
-    await updateWorkflow(workflowId, WORKFLOW_STATUS.REVIEWING, io);
-    await logEvent(workflowId, LOG_LEVEL.INFO, 'Batch complete — articles are ready for review.');
+    // 5. Automatically transition to publishing
+    await logEvent(workflowId, LOG_LEVEL.INFO, 'Batch complete — automatically starting publishing.');
     await notifyWorkflowComplete(campaign.name, 'Article Generation').catch(() => {});
+    
+    // Chain to publishing worker immediately
+    await publishingWorker.run(workflowId, campaignId, io);
 
   } catch (globalErr) {
     console.error('[articleWorker] Fatal error:', globalErr);
