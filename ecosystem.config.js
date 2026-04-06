@@ -6,7 +6,9 @@ module.exports = {
       cwd: './backend',
       env: {
         NODE_ENV: 'production',
-        PORT: 4004
+        PORT: 4004,
+        // Allow the production frontend domain to call the API
+        CORS_ORIGIN: 'https://seo.dev.mohamedbella.com'
       },
       instances: 1,
       exec_mode: 'fork'
@@ -18,7 +20,8 @@ module.exports = {
       cwd: './frontend',
       env: {
         NODE_ENV: 'production',
-        PORT: 3004
+        // Must match the Caddy reverse_proxy port: seo.dev.mohamedbella.com → localhost:3002
+        PORT: 3002
       }
     }
   ]

@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const supabase = require('../config/database');
 const { CAMPAIGN_STATUS, SCHEDULE_TYPE } = require('../config/constants');
 const axios = require('axios');
-const { PORT } = require('../config/env');
+const { PORT, API_SECRET } = require('../config/env');
 
 const API_BASE = `http://localhost:${PORT}/api`;
 
@@ -26,6 +26,8 @@ async function triggerCampaignWorkflows(scheduleType) {
          await axios.post(`${API_BASE}/workflows/trigger`, {
             campaign_id: campaign.id,
             type: 'article_generation'
+         }, {
+            headers: { Authorization: `Bearer ${API_SECRET}` }
          });
          console.log(`[scheduler] Triggered workflow for campaign ${campaign.id}`);
       } catch (err) {

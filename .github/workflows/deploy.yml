@@ -24,15 +24,12 @@ jobs:
             git fetch --all
             git reset --hard origin/main
             
-            # Install dependencies
-            npm install
-            cd backend && npm install
-            cd ../frontend && npm install
+            # Install backend dependencies
+            cd backend && npm install && cd ..
             
-            # Build frontend
-            npm run build
+            # Install & build frontend
+            cd frontend && npm install && npm run build && cd ..
             
-            # Restart PM2
-            cd ..
-            pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
+            # Restart PM2 with updated ecosystem config
+            pm2 restart ecosystem.config.js --update-env || pm2 start ecosystem.config.js
             pm2 save

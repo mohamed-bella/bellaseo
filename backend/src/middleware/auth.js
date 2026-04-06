@@ -1,4 +1,5 @@
 const supabase = require('../config/database');
+const { API_SECRET } = require('../config/env');
 
 const requireAuth = async (req, res, next) => {
   try {
@@ -8,6 +9,12 @@ const requireAuth = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    
+    // Internal API bypass for Cron jobs
+    if (token === API_SECRET) {
+      req.user = { id: 'system-cron', email: 'cron@system', role: 'admin' };
+      return next();
+    }
     
     // Verify token directly with Supabase Native Auth
     const { data: { user }, error } = await supabase.auth.getUser(token);
