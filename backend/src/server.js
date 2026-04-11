@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+app.set('trust proxy', 1);
 const rateLimit = require('express-rate-limit');
 
 const { PORT, CORS_ORIGIN } = require('./config/env');
