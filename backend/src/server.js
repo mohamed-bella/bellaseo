@@ -5,7 +5,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-app.set('trust proxy', 1);
+
 const rateLimit = require('express-rate-limit');
 
 const { PORT, CORS_ORIGIN } = require('./config/env');
@@ -29,7 +29,10 @@ const { initWhatsApp } = require('./services/whatsappService');
 const { WHATSAPP_ENABLED } = require('./config/env');
 
 const app = express();
+
 const httpServer = http.createServer(app);
+
+app.set('trust proxy', 1);
 
 // ─── Socket.IO ────────────────────────────────────────────────────────────────
 const io = new Server(httpServer, {
