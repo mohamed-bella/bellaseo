@@ -1,4 +1,13 @@
-require('dotenv').config({ path: '.env.local' });
+const fs = require('fs');
+const path = require('path');
+
+// Load .env.local if it exists (for local dev)
+if (fs.existsSync(path.join(process.cwd(), '.env.local'))) {
+  require('dotenv').config({ path: '.env.local' });
+} else {
+  // Otherwise load default .env (standard for Docker/Coolify)
+  require('dotenv').config();
+}
 
 const required = [
   'SUPABASE_URL',
