@@ -16,7 +16,7 @@
 # next.js
 /.next/
 /out/
-
+/src/.baileys_session/
 # production
 /build
 
