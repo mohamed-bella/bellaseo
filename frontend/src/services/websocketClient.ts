@@ -4,7 +4,8 @@ let socket: Socket | null = null;
 
 export const getSocket = () => {
   if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:4000');
+    const url = process.env.NEXT_PUBLIC_WS_URL || '';
+    socket = url ? io(url) : io();
   }
   return socket;
 };

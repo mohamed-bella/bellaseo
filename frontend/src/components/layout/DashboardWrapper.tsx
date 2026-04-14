@@ -35,8 +35,8 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
     fetchBranding();
   }, [pathname]);
 
-  // If on login page, render raw children without the dashboard layout
-  if (pathname?.startsWith('/login')) {
+  // If on login page or docs, render raw children without the dashboard layout
+  if (pathname?.startsWith('/login') || pathname?.startsWith('/docs')) {
     return <>{children}</>;
   }
 
