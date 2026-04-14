@@ -6,14 +6,15 @@
  * - Clean disconnect / delete-session lifecycle
  * - Reconnects only on unexpected drops (not intentional logouts)
  */
-const {
-  makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  makeCacheableSignalKeyStore,
-  Browsers,
-} = require('@whiskeysockets/baileys');
+// Baileys imports will be loaded dynamically to support ESM
+let Baileys = null;
+
+async function _ensureBaileys() {
+  if (Baileys) return Baileys;
+  Baileys = await import('@whiskeysockets/baileys');
+  return Baileys;
+}
+
 const { Boom } = require('@hapi/boom');
 const path = require('path');
 const fs   = require('fs');
@@ -58,6 +59,14 @@ async function initWhatsApp(io = null) {
   intentionalStop = false;
 
   try {
+    const { 
+      makeWASocket, 
+      useMultiFileAuthState, 
+      fetchLatestBaileysVersion, 
+      makeCacheableSignalKeyStore, 
+      Browsers 
+    } = await _ensureBaileys();
+
     let auth;
     try {
       if (!fs.existsSync(SESSION_DIR)) fs.mkdirSync(SESSION_DIR, { recursive: true });
@@ -75,10 +84,10 @@ async function initWhatsApp(io = null) {
     }
     const { state, saveCreds } = auth;
     
-    // Stable version fetching with fallback - Using latest confirmed web version
-    let version = [2, 3000, 1036420555];
+    // Stable version fetching with fallback
+    let version = [2, 3000, 1015901307];
     try {
-      const v = await fetchLatestWaWebVersion();
+      const v = await fetchLatestBaileysVersion();
       if (v && v.version) version = v.version;
     } catch { 
       console.warn('[WhatsApp] Using fallback version for compatibility.'); 
@@ -100,6 +109,7 @@ async function initWhatsApp(io = null) {
       defaultQueryTimeoutMs: 0,
       keepAliveIntervalMs: 30000,
     });
+
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -143,6 +153,7 @@ async function initWhatsApp(io = null) {
           ? lastDisconnect.error.output?.statusCode
           : undefined;
 
+        const { DisconnectReason } = await _ensureBaileys();
         const loggedOut = statusCode === DisconnectReason.loggedOut;
         
         // Don't spam 405 "Restart Required" logs - it's handled by retry logic
