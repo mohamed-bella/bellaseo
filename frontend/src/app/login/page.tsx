@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
-import { Eye, EyeOff, Lock, User, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Lock, User, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -14,22 +15,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      toast.error('Please enter both username and password.');
-      return;
-    }
+    if (!username || !password) return toast.error('Check your credentials.');
 
     setIsLoading(true);
     try {
-      if (typeof window !== 'undefined' && 
-         (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') || 
-          !process.env.NEXT_PUBLIC_SUPABASE_URL)) {
-          throw new Error("Missing Supabase configuration. Please check your frontend/.env.local file.");
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: username,
         password: password
@@ -38,145 +31,100 @@ export default function LoginPage() {
       if (error || !data.user) throw error;
       
       Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, secure: true, path: '/' });
-
-      let role: 'admin' | 'editor' = 'editor';
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-        if (profile?.role) role = profile.role as 'admin' | 'editor';
-      } catch (profileErr) {
-        console.warn("Profile fetch failed, defaulting to editor:", profileErr);
-      }
-
+      
       const userPayload = {
         id: data.user.id,
         username: data.user.email?.split('@')[0] || 'User',
-        role: role
       };
-
       localStorage.setItem('seo_user', JSON.stringify(userPayload));
 
-      toast.success('Login successful! Redirecting...');
-      window.location.href = '/';
+      setIsSuccess(true);
+      setTimeout(() => window.location.href = '/', 1000);
     } catch (err: any) {
-      toast.error(err.message || 'Invalid credentials');
+      toast.error(err.message || 'Login failed.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* ── LEFT COLUMN: Login Form ── */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24">
-        <div className="max-w-md w-full mx-auto">
-          {/* Brand Header */}
-          <div className="mb-10 block">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-[#FF642D] shadow-sm mb-6">
-              <ShieldCheck className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-[#1A1D23] tracking-tight mb-2">Welcome Back</h1>
-            <p className="text-sm font-medium text-[#6B7280]">Sign in to your automated SEO workspace.</p>
-          </div>
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-[#F9FAFB] overflow-hidden">
+      
+      {/* ── Glory Glow Background ── */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#FF642D]/20 blur-[120px] rounded-full opacity-40 animate-pulse" />
+      </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-[400px] px-6"
+      >
+        <div className="text-center mb-10">
+          <motion.div 
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1A1D23] shadow-2xl mb-6 group transition-all"
+          >
+            <ShieldCheck className="w-8 h-8 text-[#FF642D]" />
+          </motion.div>
+          <h1 className="text-3xl font-black text-[#1A1D23] tracking-tight lowercase">
+            access<span className="text-[#FF642D]">.</span>center
+          </h1>
+          <p className="text-[13px] font-medium text-[#9CA3AF] mt-2 tracking-wide uppercase">
+            SEO Automation Engine v2
+          </p>
+        </div>
+
+        <div className="bg-white p-8 rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1A1D23] uppercase tracking-wider">Email</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-[#9CA3AF]" />
-                </div>
+              <div className="relative group">
                 <input
                   type="email"
-                  placeholder="admin@example.com"
+                  placeholder="Identity"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-white border border-[#E5E8EB] focus:border-[#FF642D] focus:ring-2 focus:ring-[#FF642D]/20 rounded-md pl-10 pr-4 py-2.5 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none"
-                  disabled={isLoading}
-                  autoComplete="email"
+                  className="w-full bg-[#F3F4F6] border-none rounded-2xl px-5 py-4 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none ring-2 ring-transparent focus:ring-[#FF642D]/20 focus:bg-white"
+                  disabled={isLoading || isSuccess}
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1A1D23] uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-[#9CA3AF]" />
-                </div>
+              <div className="relative group">
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  type="password"
+                  placeholder="Access Key"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border border-[#E5E8EB] focus:border-[#FF642D] focus:ring-2 focus:ring-[#FF642D]/20 rounded-md pl-10 pr-10 py-2.5 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none"
-                  disabled={isLoading}
-                  autoComplete="current-password"
+                  className="w-full bg-[#F3F4F6] border-none rounded-2xl px-5 py-4 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none ring-2 ring-transparent focus:ring-[#FF642D]/20 focus:bg-white"
+                  disabled={isLoading || isSuccess}
                   required
                 />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="w-full py-2.5 mt-2"
+              className={`w-full py-4 rounded-2xl font-bold transition-all duration-300 shadow-lg ${isSuccess ? 'bg-[#10B981]' : 'bg-[#FF642D] hover:scale-[1.02] active:scale-[0.98]'}`}
               isLoading={isLoading}
+              disabled={isSuccess}
             >
-              Sign In
+              {isSuccess ? 'Authorized' : 'Connect'}
             </Button>
           </form>
-
-          {/* Footer info */}
-          <div className="mt-12 text-sm text-[#9CA3AF] flex items-center gap-2">
-             <ShieldCheck className="w-4 h-4" />
-             Authenticated securely via Supabase Auth
-          </div>
         </div>
-      </div>
 
-      {/* ── RIGHT COLUMN: Brand/Aesthetic Pattern (Hidden on Mobile) ── */}
-      <div className="hidden lg:flex w-1/2 bg-[#F3F4F6] relative items-center justify-center p-12 overflow-hidden border-l border-[#E5E8EB]">
-        {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#E5E8EB_1px,transparent_1px),linear-gradient(to_bottom,#E5E8EB_1px,transparent_1px)] bg-[size:40px_40px] opacity-60" />
-        
-        <div className="relative z-10 max-w-lg bg-white p-10 rounded-xl shadow-xl border border-[#E5E8EB]">
-          <h2 className="text-2xl font-bold text-[#1A1D23] mb-6">System Status: Optimal</h2>
-          <div className="space-y-4">
-            {[
-              { label: 'Automated Publishing Pipeline', status: 'Operational' },
-              { label: 'AI Generation Clusters', status: 'Online' },
-              { label: 'Internal Link Engine', status: 'Optimized' }
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-[#F7F8FA] rounded-md border border-[#E5E8EB]">
-                <span className="text-sm font-semibold text-[#1A1D23]">{item.label}</span>
-                <span className="flex items-center gap-2 text-xs font-bold text-[#10B981] bg-emerald-50 px-2.5 py-1.5 rounded-md border border-emerald-100">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  {item.status}
-                </span>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-8 pt-8 border-t border-[#E5E8EB]">
-            <p className="text-sm font-medium text-[#6B7280] leading-relaxed">
-              Enterprise SEO infrastructure running on strict, data-driven automation. Your competitive advantage is ready.
+        <div className="mt-10 text-center">
+            <p className="text-[10px] font-bold text-[#D1D5DB] uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+              <Sparkles className="w-3 h-3 text-[#FF642D]" />
+              Secure Enterprise Protocol
             </p>
-          </div>
         </div>
-      </div>
+      </motion.div>
 
     </div>
   );

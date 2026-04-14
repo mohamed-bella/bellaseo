@@ -8,31 +8,26 @@ import {
   Globe,
   Clock,
   Activity,
-  FolderPlus,
-  Search,
   Plus,
   Sparkles,
-  Rocket,
+  Zap,
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import StatCard from '@/components/dashboard/StatCard';
-import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
-import NextScheduleCard from '@/components/dashboard/NextScheduleCard';
-import AuthorityCard from '@/components/dashboard/AuthorityCard';
 import apiClient from '@/services/apiClient';
 import { getSocket } from '@/services/websocketClient';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
+import { motion } from 'framer-motion';
 
 const WORKFLOW_STATUS_LABELS: Record<string, string> = {
   pending: 'Queued',
-  generating: 'Writing articles...',
-  reviewing: 'Waiting for review',
+  generating: 'Generating Content',
+  reviewing: 'In Review',
   approved: 'Approved',
-  publishing: 'Publishing...',
-  published: 'Done',
-  failed: 'Failed',
+  publishing: 'Live Syncing',
+  published: 'Finalized',
+  failed: 'Error',
 };
 
 export default function DashboardPage() {
@@ -44,7 +39,6 @@ export default function DashboardPage() {
   });
 
   const [activeWorkflows, setActiveWorkflows] = useState<any[]>([]);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [whatsappStatus, setWhatsappStatus] = useState<any>({ connected: false });
   const [isLoading, setIsLoading] = useState(true);
@@ -56,12 +50,11 @@ export default function DashboardPage() {
         apiClient.get('/keywords'),
         apiClient.get('/articles'),
         apiClient.get('/workflows?status=generating,publishing'),
-        apiClient.get('/logs?limit=8'),
+        apiClient.get('/logs?limit=12'),
         apiClient.get('/notifications/whatsapp/status'),
         apiClient.get('/sites'),
       ]);
 
-      setCampaigns(c.data);
       setStats({
         activeSites: s.data.length,
         totalCampaigns: c.data.length,
@@ -93,193 +86,163 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
-        <Rocket className="w-8 h-8 text-[#FF642D] animate-bounce mb-4" />
-        <h2 className="text-lg font-semibold text-[#1A1D23]">Loading Workspace...</h2>
+      <div className="flex-1 flex items-center justify-center min-h-[70vh]">
+        <div className="w-12 h-12 border-4 border-[#FF642D]/20 border-t-[#FF642D] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 focus:outline-none pb-12">
+    <div className="w-full max-w-[1400px] mx-auto py-8 px-4 space-y-12">
       
-      {/* ── Top Action Row ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E8EB] pb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1A1D23] tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm text-[#6B7280] mt-1">Live metrics and automation status</p>
+      {/* ── Minimal Header ── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-[#E5E8EB]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+             <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+             <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#9CA3AF]">System Live</span>
+          </div>
+          <h1 className="text-4xl font-black text-[#1A1D23] tracking-tighter">Command Center</h1>
         </div>
         
-        <div className="flex items-center gap-3">
-          {/* WhatsApp Status Pill */}
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold ${whatsappStatus.connected ? 'border-green-200 bg-green-50 text-green-700' : 'border-[#E5E8EB] bg-white text-[#6B7280]'}`}>
-            <div className={`w-2 h-2 rounded-full ${whatsappStatus.connected ? 'bg-green-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-[#9CA3AF]'}`} />
-            WhatsApp {whatsappStatus.connected ? 'Live' : 'Offline'}
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">WhatsApp Engine</p>
+            <p className={`text-xs font-bold ${whatsappStatus.connected ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+              {whatsappStatus.connected ? 'Operational' : 'Disconnected'}
+            </p>
           </div>
-
           <Link href="/campaigns">
-            <Button size="sm" className="gap-2">
-              <Plus className="w-4 h-4" /> New Project
+            <Button className="px-8 py-6 rounded-2xl bg-[#1A1D23] font-bold text-sm tracking-wide hover:bg-[#FF642D] transition-all group">
+               Deploy New Project
+               <Zap className="w-4 h-4 ml-2 text-[#FF642D] group-hover:text-white transition-colors" />
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* ── Core Metric Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-sm font-semibold text-[#6B7280]">Connected Sites</p>
-            <Globe className="w-4 h-4 text-[#FF642D]" />
-          </div>
-          <p className="text-2xl font-bold text-[#1A1D23]">{stats.activeSites}</p>
-        </div>
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-sm font-semibold text-[#6B7280]">Active Projects</p>
-            <FolderKanban className="w-4 h-4 text-[#FF642D]" />
-          </div>
-          <p className="text-2xl font-bold text-[#1A1D23]">{stats.totalCampaigns}</p>
-        </div>
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-sm font-semibold text-[#6B7280]">Tracked Keywords</p>
-            <Tags className="w-4 h-4 text-[#FF642D]" />
-          </div>
-          <p className="text-2xl font-bold text-[#1A1D23]">{stats.totalKeywords}</p>
-        </div>
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-2">
-            <p className="text-sm font-semibold text-[#6B7280]">Published Articles</p>
-            <FileText className="w-4 h-4 text-[#10B981]" />
-          </div>
-          <p className="text-2xl font-bold text-[#1A1D23]">{stats.publishedArticles}</p>
-        </div>
+      {/* ── High Impact Stats ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-4">
+        {[
+          { label: 'Network Reach', value: stats.activeSites, icon: Globe, unit: 'Sites' },
+          { label: 'Active Pipeline', value: stats.totalCampaigns, icon: FolderKanban, unit: 'Projects' },
+          { label: 'Keyword Velocity', value: stats.totalKeywords, icon: Tags, unit: 'Seeds' },
+          { label: 'Content Factory', value: stats.publishedArticles, icon: FileText, unit: 'Published' }
+        ].map((stat, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1 }}
+            className="flex flex-col group cursor-default"
+          >
+            <div className="flex items-center gap-2 mb-2">
+               <stat.icon className="w-4 h-4 text-[#FF642D]" />
+               <p className="text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest">{stat.label}</p>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-5xl font-black text-[#1A1D23] tracking-tighter group-hover:text-[#FF642D] transition-colors">
+                {stat.value}
+              </span>
+              <span className="text-xs font-bold text-[#D1D5DB] lowercase">{stat.unit}</span>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* ── Compact Quick Links ── */}
-      <div className="flex gap-2">
-        <Link href="/keywords" className="btn-secondary text-xs h-8">
-          <Search className="w-3.5 h-3.5 mr-1.5" /> Add Keywords
-        </Link>
-        <Link href="/content-lab" className="btn-secondary text-xs h-8">
-          <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Content Lab
-        </Link>
-        <Link href="/sites" className="btn-secondary text-xs h-8">
-          <Globe className="w-3.5 h-3.5 mr-1.5" /> Manage Sites
-        </Link>
-      </div>
-
-      <OnboardingChecklist 
-        hasSites={stats.activeSites > 0} 
-        hasCampaigns={stats.totalCampaigns > 0} 
-        hasKeywords={stats.totalKeywords > 0} 
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <NextScheduleCard campaigns={campaigns} />
-        <AuthorityCard />
-      </div>
-
-      {/* ── Data Tables Row ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 pt-8">
         
-        {/* Workflows Table */}
-        <div className="xl:col-span-2 card-premium p-0 overflow-hidden flex flex-col h-full">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E8EB] bg-white">
-            <h3 className="text-base font-semibold text-[#1A1D23] flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#FF642D]" />
-              Active Core Workflows
-            </h3>
+        {/* Workflows Column */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-black uppercase tracking-tight text-[#1A1D23] flex items-center gap-3">
+              <Activity className="w-5 h-5 text-[#FF642D]" />
+              Active Processes
+            </h2>
             {activeWorkflows.length > 0 && (
-              <span className="badge-orange">{activeWorkflows.length} Running</span>
+              <span className="text-[10px] font-bold bg-[#FF642D] text-white px-3 py-1 rounded-full animate-pulse">
+                {activeWorkflows.length} Synchronizing
+              </span>
             )}
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Project Name</th>
-                  <th>Progress</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeWorkflows.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="text-center py-8 text-[#6B7280]">
-                      No active generation workflows running.
-                    </td>
-                  </tr>
-                ) : (
-                  activeWorkflows.map((w) => (
-                    <tr key={w.id}>
-                      <td>
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <div className="w-2 h-2 rounded-full bg-[#FF642D] animate-pulse" />
-                          {WORKFLOW_STATUS_LABELS[w.status] || w.status}
-                        </div>
-                      </td>
-                      <td className="font-medium text-[#6B7280]">
-                        {w.campaigns?.name || 'Manual Selection'}
-                      </td>
-                      <td className="w-48">
-                        <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 overflow-hidden">
-                          <div className="bg-[#FF642D] h-1.5 rounded-full w-1/3 animate-pulse" />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        {/* Activity Feed */}
-        <div className="card-premium p-0 flex flex-col h-full">
-          <div className="px-5 py-4 border-b border-[#E5E8EB] bg-white">
-            <h3 className="text-base font-semibold text-[#1A1D23] flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#6B7280]" />
-              System Log
-            </h3>
-          </div>
-          
-          <div className="p-0 overflow-y-auto max-h-[300px]">
-            {recentLogs.length === 0 ? (
-              <p className="text-sm text-[#6B7280] text-center py-8">
-                No logs recorded.
-              </p>
+          <div className="space-y-4">
+            {activeWorkflows.length === 0 ? (
+              <div className="border-2 border-dashed border-[#E5E8EB] rounded-3xl p-12 text-center">
+                 <p className="text-sm font-bold text-[#9CA3AF]">Engine Idle. No active content streams detected.</p>
+              </div>
             ) : (
-              <div className="divide-y divide-[#E5E8EB]">
-                {recentLogs.map((log) => (
-                  <div key={log.id} className="p-4 hover:bg-[#F7F8FA] transition-colors flex gap-3">
-                    {log.status === 'error' ? (
-                      <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
-                    ) : (
-                      <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0 mt-0.5" />
-                    )}
+              activeWorkflows.map((w, i) => (
+                <motion.div 
+                  key={w.id} 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white border border-[#E5E8EB] rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center gap-6">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F9FAFB] flex items-center justify-center shrink-0">
+                       <Zap className="w-5 h-5 text-[#FF642D] animate-bounce" />
+                    </div>
                     <div>
-                      <p className="text-sm text-[#1A1D23] leading-snug">{log.message}</p>
-                      <p className="text-xs text-[#9CA3AF] mt-1 font-medium">
-                        {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                      <h4 className="font-black text-[#1A1D23] leading-none mb-1 text-base underline decoration-[#FF642D]/20 decoration-4">
+                        {w.campaigns?.name || 'Content Stream'}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider italic">
+                          {WORKFLOW_STATUS_LABELS[w.status] || 'Processing'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="w-32 sm:w-64">
+                    <div className="h-2 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
+                       <motion.div 
+                         initial={{ width: 0 }}
+                         animate={{ width: '40%' }}
+                         className="h-full bg-[#1A1D23]" 
+                       />
+                    </div>
+                  </div>
+                </motion.div>
+              ))
             )}
           </div>
-          
-          <div className="mt-auto px-5 py-3 border-t border-[#E5E8EB] bg-[#F7F8FA]">
-            <Link href="/workflows" className="text-xs font-semibold text-[#FF642D] hover:underline">
-              View comprehensive log →
-            </Link>
+        </div>
+
+        {/* Activity Column */}
+        <div className="space-y-8">
+          <h2 className="text-lg font-black uppercase tracking-tight text-[#1A1D23] flex items-center gap-3">
+            <Clock className="w-5 h-5 text-[#9CA3AF]" />
+            Telemetry
+          </h2>
+
+          <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {recentLogs.length === 0 ? (
+              <p className="text-xs font-bold text-[#D1D5DB]">Waiting for system events...</p>
+            ) : (
+              recentLogs.map((log) => (
+                <div key={log.id} className="group relative pl-6 border-l-2 border-[#E5E8EB] hover:border-[#FF642D] transition-colors pb-4">
+                  <div className="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-white border-2 border-[#E5E8EB] group-hover:border-[#FF642D] transition-colors" />
+                  <p className="text-xs font-bold text-[#1A1D23] leading-relaxed mb-1">{log.message}</p>
+                  <p className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest">
+                    {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </div>
-        
+
       </div>
+
+      {/* ── Glory Footer ── */}
+      <div className="pt-12 flex justify-center">
+         <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#F9FAFB] border border-[#E5E8EB]">
+            <Sparkles className="w-4 h-4 text-[#FF642D]" />
+            <p className="text-[11px] font-black text-[#1A1D23] uppercase tracking-[0.3em]">Precision Engineering SEO</p>
+         </div>
+      </div>
+
     </div>
   );
 }
