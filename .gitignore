@@ -10,6 +10,7 @@ frontend/out/
 
 # Baileys WhatsApp Session
 backend/.baileys_session/
+frontend/.baileys_session/
 
 # Environment variables
 .env
