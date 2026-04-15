@@ -28,7 +28,8 @@ export default function LoginPage() {
 
       if (error || !data.user) throw error;
       
-      Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, secure: true, path: '/' });
+      // Ensure the cookie is accessible even if the user is testing on HTTP (like http://77.42.43.52:3000)
+      Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, path: '/' });
       
       const userPayload = {
         id: data.user.id,
