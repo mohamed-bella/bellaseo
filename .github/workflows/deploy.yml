@@ -24,12 +24,12 @@ jobs:
             git fetch --all
             git reset --hard origin/main
             
-            # Install backend dependencies
-            cd backend && npm install && cd ..
+            # Install & Build Unified Monolith
+            cd frontend
+            npm install
+            npm run build
             
-            # Install & build frontend
-            cd frontend && npm install && npm run build && cd ..
-            
-            # Restart PM2 with updated ecosystem config
-            pm2 restart ecosystem.config.js --update-env || pm2 start ecosystem.config.js
+            # Restart PM2 with the unified monolith script
+            # Assumes your ecosystem.config.js is updated or you are starting directly
+            pm2 restart openseo-unified || pm2 start src/server/server.js --name "openseo-unified"
             pm2 save
