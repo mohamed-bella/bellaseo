@@ -38,6 +38,15 @@ nextApp.prepare().then(() => {
   // ─── Socket.IO ────────────────────────────────────────────────────────────────
   const io = new Server(httpServer, {
     cors: { origin: CORS_ORIGIN, methods: ['GET', 'POST'] },
+    destroyUpgrade: false // Crucial: Allows Next.js HMR to function without Socket.IO destroying the connection
+  });
+
+  // Manually route Next.js WebSockets since we use a custom server
+  httpServer.on('upgrade', (req, socket, head) => {
+    if (req.url.startsWith('/_next')) {
+      // Pass Hot Module Reloading to Next.js
+      nextApp.getUpgradeHandler()(req, socket, head);
+    }
   });
 
   // Attach io to app so controllers can emit events
