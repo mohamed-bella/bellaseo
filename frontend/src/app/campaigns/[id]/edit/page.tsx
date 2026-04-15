@@ -39,6 +39,12 @@ export default function ProjectStudioPage() {
   // ── Local Overrides ──
   // This state holds only what is different/custom for THIS project
   const [localConfig, setLocalConfig] = useState<any>({});
+  
+  // ── Post Types ──
+  const [postTypes, setPostTypes] = useState<any[]>([
+    { slug: 'post', name: 'Posts' },
+    { slug: 'page', name: 'Pages' },
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +70,21 @@ export default function ProjectStudioPage() {
     };
     fetchData();
   }, [id]);
+
+  // Fetch CPTs when target site changes
+  useEffect(() => {
+    if (campaign?.target_site_id && sites.length > 0) {
+      const selectedSite = sites.find((s) => s.id === campaign.target_site_id);
+      if (selectedSite?.type === 'wordpress') {
+        apiClient
+          .get(`/sites/${campaign.target_site_id}/post-types`)
+          .then((res) => setPostTypes(res.data))
+          .catch(() => setPostTypes([{ slug: 'post', name: 'Posts' }, { slug: 'page', name: 'Pages' }]));
+      } else {
+        setPostTypes([{ slug: 'post', name: 'Posts' }]);
+      }
+    }
+  }, [campaign?.target_site_id, sites]);
 
   // ── Smart Inheritance Logic ──
   const globalDirectives = globalSettings?.article_config || {};
@@ -446,9 +467,17 @@ export default function ProjectStudioPage() {
                   <div className="p-6 bg-secondary rounded-2xl border border-border/50">
                     <h4 className="text-xs font-black uppercase tracking-widest text-foreground mb-4">WordPress Configuration</h4>
                     <div className="space-y-4">
-                       <div className="flex items-center justify-between p-4 bg-background/50 rounded-xl border border-border">
-                          <span className="text-xs font-bold text-muted-foreground">Target Post Type</span>
-                          <span className="text-xs font-black text-primary font-mono">{campaign.target_cpt || 'post'}</span>
+                       <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#9CA3AF]">Target Post Type</label>
+                          <select 
+                            value={campaign.target_cpt || 'post'}
+                            onChange={(e) => setCampaign({ ...campaign, target_cpt: e.target.value })}
+                            className="w-full bg-[#F9FAFB] border border-[#E5E8EB] hover:border-[#D1D5DB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold outline-none focus:ring-2 focus:ring-[#FF642D]/20 transition-all focus:border-[#FF642D]"
+                          >
+                             {postTypes.map(pt => (
+                                <option key={pt.slug} value={pt.slug}>{pt.name}</option>
+                             ))}
+                          </select>
                        </div>
                        <p className="text-[10px] text-muted-foreground italic">Note: Custom Post Types (CPTs) are fetched automatically from the connected site.</p>
                     </div>
