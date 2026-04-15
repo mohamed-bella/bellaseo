@@ -76,6 +76,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[#F3F4F6] border-none rounded-2xl px-5 py-4 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none ring-2 ring-transparent focus:ring-[#FF642D]/20 focus:bg-white"
                 disabled={isLoading || isSuccess}
+                suppressHydrationWarning
                 required
               />
             </div>
@@ -88,6 +89,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full bg-[#F3F4F6] border-none rounded-2xl px-5 py-4 text-sm text-[#1A1D23] transition-all placeholder:text-[#9CA3AF] outline-none ring-2 ring-transparent focus:ring-[#FF642D]/20 focus:bg-white"
                 disabled={isLoading || isSuccess}
+                suppressHydrationWarning
                 required
               />
             </div>
