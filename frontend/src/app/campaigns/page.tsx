@@ -229,30 +229,30 @@ export default function CampaignsPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-[1400px] mx-auto py-8 px-4 space-y-8">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-[#E5E8EB] pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
-            <FolderKanban className="w-8 h-8 text-primary" />
-            My Projects
+          <h1 className="text-3xl font-black text-[#1A1D23] tracking-tighter flex items-center gap-3">
+            <FolderKanban className="w-8 h-8 text-[#FF642D]" />
+            Project Hub
           </h1>
-          <p className="text-muted-foreground mt-1 text-base">
-            Each project targets a niche. Add topics to it, then let the AI write the content.
+          <p className="text-[#6B7280] font-medium mt-1 text-sm">
+            Central repository for your SEO clusters. Add topics, then deploy the AI automation engine.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <Button
             variant="outline"
-            className="flex items-center gap-2 text-sm"
+            className="flex items-center gap-2 text-sm border-[#E5E8EB] text-[#1A1D23] hover:bg-[#F9FAFB] font-bold px-6 py-6 rounded-xl transition-all"
             onClick={() => setIsBulkModalOpen(true)}
           >
-            Import from JSON
+            Import JSON
           </Button>
-        <Button onClick={() => openModal()} className="flex items-center gap-2 text-sm font-bold w-full sm:w-auto">
-          <Plus className="w-4 h-4" />
-          New Project
-        </Button>
+          <Button onClick={() => openModal()} className="flex items-center gap-2 text-sm font-bold px-6 py-6 rounded-xl bg-[#1A1D23] hover:bg-[#FF642D] transition-all group">
+            <Plus className="w-4 h-4 text-[#FF642D] group-hover:text-white transition-colors" />
+            Deploy Project
+          </Button>
         </div>
       </div>
 
@@ -289,132 +289,128 @@ export default function CampaignsPage() {
       </Modal>
 
       {/* Search & View Controls */}
-      <div className="flex items-center justify-between glass p-3 rounded-xl border border-white/5">
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="flex items-center justify-between bg-white border border-[#E5E8EB] p-3 rounded-2xl shadow-sm">
+        <div className="relative w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects..."
-            className="w-full bg-secondary/50 border border-border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary transition-all text-foreground"
+            placeholder="Search deployed projects..."
+            className="w-full bg-[#F3F4F6] border-none rounded-xl pl-11 pr-4 py-3 text-sm text-[#1A1D23] focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 transition-all font-medium placeholder:text-[#9CA3AF]"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon"><LayoutGrid className="w-4 h-4" /></Button>
-          <Button variant="ghost" size="icon" className="bg-white/5 text-white"><List className="w-4 h-4" /></Button>
-          <div className="w-px h-6 bg-border mx-1" />
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="text-[#9CA3AF] hover:text-[#1A1D23] bg-[#F9FAFB] border border-[#E5E8EB]"><LayoutGrid className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="icon" className="bg-[#1A1D23] text-white hover:bg-[#FF642D]"><List className="w-4 h-4" /></Button>
+          <div className="w-px h-8 bg-[#E5E8EB] mx-2" />
           <Button
             variant="outline"
-            className="flex items-center gap-1.5 text-rose-500 border-rose-500/20 hover:bg-rose-500/10 text-xs"
+            className="flex items-center gap-1.5 text-rose-500 border-rose-100 hover:bg-rose-50 font-bold px-4 rounded-xl"
             onClick={handleClearAll}
           >
-            <Trash className="w-3.5 h-3.5" />
-            Clear All
+            <Trash className="w-4 h-4" />
+            Nuke All Projects
           </Button>
         </div>
       </div>
 
       {/* Projects Table */}
-      <div className="bg-transparent border-t border-border mt-6 overflow-x-auto custom-scrollbar">
+      <div className="bg-white border border-[#E5E8EB] rounded-2xl mt-6 overflow-hidden shadow-sm">
         <table className="w-full text-left min-w-[800px]">
-          <thead className="bg-secondary/30 text-xs font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+          <thead className="bg-[#F9FAFB] text-[11px] font-black uppercase tracking-widest text-[#9CA3AF] border-b border-[#E5E8EB]">
             <tr>
-              <th className="px-6 py-4">Project Name</th>
-              <th className="px-6 py-4">Topic / Niche</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-6 py-5">Project Matrix</th>
+              <th className="px-6 py-5">Target Niche</th>
+              <th className="px-6 py-5">Engine Status</th>
+              <th className="px-6 py-5 text-right">Commands</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-[#E5E8EB]">
             {isLoading ? (
-              <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground italic border-none">Loading your projects...</td></tr>
+              <tr><td colSpan={4} className="px-6 py-12 text-center text-[#9CA3AF] font-bold border-none">Syncing database...</td></tr>
             ) : filtered.length === 0 && campaigns.length === 0 ? (
               <tr>
                 <td colSpan={4} className="border-none">
-                  <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                      <FolderKanban className="w-7 h-7 text-primary" />
+                  <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+                    <div className="w-16 h-16 rounded-[20px] bg-[#FFF5F0] border border-[#FF642D]/20 flex items-center justify-center mb-6">
+                      <FolderKanban className="w-8 h-8 text-[#FF642D]" />
                     </div>
-                    <p className="text-base font-bold text-foreground mb-1">No projects yet</p>
-                    <p className="text-sm text-muted-foreground mb-5 max-w-xs">
-                      Create your first project to start generating SEO content automatically.
+                    <p className="text-xl font-black text-[#1A1D23] mb-2 tracking-tight">No Active Projects</p>
+                    <p className="text-sm font-medium text-[#6B7280] mb-8 max-w-sm">
+                      Initialize your first SEO project to begin generating massive organic traffic.
                     </p>
-                    <Button onClick={() => openModal()} className="flex items-center gap-2">
+                    <Button onClick={() => openModal()} className="flex items-center gap-2 bg-[#1A1D23] hover:bg-[#FF642D] px-8 py-6 rounded-xl font-bold transition-all shadow-lg text-white">
                       <Plus className="w-4 h-4" />
-                      Create My First Project
+                      Initialize First Project
                     </Button>
                   </div>
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground border-none">No projects match your search.</td></tr>
+              <tr><td colSpan={4} className="px-6 py-12 text-center text-[#9CA3AF] font-bold border-none">No intelligence matches your query.</td></tr>
             ) : (
               filtered.map((c) => (
                 <tr 
                   key={c.id} 
-                  className="hover:bg-secondary/40 transition-colors group cursor-pointer"
+                  className="hover:bg-[#F9FAFB] transition-colors group cursor-pointer"
                   onClick={() => window.location.href = `/campaigns/${c.id}`}
-                  title="Open Project Hub"
+                  title="Open Project Database"
                 >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3 font-black text-foreground group-hover:text-primary transition-colors">
-                      <FcFolder className="w-6 h-6 shrink-0" />
-                      {c.name}
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-[#E5E8EB] flex items-center justify-center shadow-sm group-hover:border-[#FF642D] transition-colors">
+                        <FcFolder className="w-5 h-5 flex-shrink-0" />
+                      </div>
+                      <span className="font-black text-[#1A1D23] group-hover:text-[#FF642D] transition-colors text-[15px]">{c.name}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground text-sm font-semibold">{c.niche}</td>
-                  <td className="px-6 py-4">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${STATUS_COLORS[c.status] || ''}`}>
+                  <td className="px-6 py-5 text-[#6B7280] text-sm font-semibold max-w-[250px] truncate">{c.niche}</td>
+                  <td className="px-6 py-5">
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${STATUS_COLORS[c.status] || ''}`}>
                       {STATUS_LABELS[c.status] || c.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-5 text-right">
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       
                       {/* Main CTA: Open Hub */}
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center justify-center gap-1.5 text-xs font-bold text-primary border-primary/30 group-hover:bg-primary/10 transition-colors w-full sm:w-auto"
+                        className="flex items-center justify-center gap-2 text-xs font-bold bg-[#F9FAFB] hover:bg-[#FF642D] text-[#1A1D23] hover:text-white border border-[#E5E8EB] hover:border-[#FF642D] px-4 py-2 rounded-xl transition-all w-full sm:w-auto"
                         onClick={() => window.location.href = `/campaigns/${c.id}`}
                       >
                         <span className="hidden sm:inline">Open Workspace</span>
                         <span className="sm:hidden">Workspace</span>
-                        <Rocket className="w-3.5 h-3.5 ml-1" />
+                        <Rocket className="w-3.5 h-3.5" />
                       </Button>
 
-                      <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+                      <div className="w-px h-6 bg-[#E5E8EB] mx-2 hidden sm:block" />
 
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-1 justify-end">
                         {/* Pause / Resume */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        <button
                           title={c.status === 'active' ? 'Pause auto-posting' : 'Resume auto-posting'}
                           onClick={() => handleToggleStatus(c.id, c.status)}
-                          className="h-9 w-9"
+                          className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#F3F4F6] transition-colors"
                         >
                           {c.status === 'active'
                             ? <Pause className="w-4 h-4 text-amber-500" />
                             : <Play className="w-4 h-4 text-emerald-500" />}
-                        </Button>
+                        </button>
 
                         {/* Edit: Redirect to Studio */}
-                        <Button variant="ghost" size="icon" onClick={() => window.location.href = `/campaigns/${c.id}/edit`} title="Open Project Studio" className="h-9 w-9">
-                          <Edit className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
-                        </Button>
+                        <button onClick={() => window.location.href = `/campaigns/${c.id}/edit`} title="Open Project Studio" className="flex items-center justify-center w-9 h-9 rounded-xl text-[#9CA3AF] hover:text-[#1A1D23] hover:bg-[#F3F4F6] transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
 
                         {/* Delete */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-rose-500 hover:text-rose-400 group/del h-9 w-9"
+                        <button
+                          className="flex items-center justify-center w-9 h-9 rounded-xl text-[#9CA3AF] hover:text-rose-500 hover:bg-rose-50 transition-colors"
                           onClick={() => handleDelete(c.id, c.name)}
                           title="Delete this project"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </td>
@@ -433,19 +429,19 @@ export default function CampaignsPage() {
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[80vh] overflow-y-auto px-1 custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest">
                 Project Name
               </label>
               <input
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full bg-[#F9FAFB] border border-[#E5E8EB] hover:border-[#D1D5DB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] transition-all"
                 placeholder="e.g. Travel Blog 2024"
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest">
                 What is this project about? (Niche/Topic)
               </label>
               <textarea
@@ -453,7 +449,7 @@ export default function CampaignsPage() {
                 rows={2}
                 value={formData.niche}
                 onChange={(e) => setFormData({ ...formData, niche: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary custom-scrollbar"
+                className="w-full bg-[#F9FAFB] border border-[#E5E8EB] hover:border-[#D1D5DB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-medium focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] transition-all custom-scrollbar"
                 placeholder="e.g. Sustainable Travel in North Africa, focusing on eco-friendly hotels and local culture."
               />
             </div>
@@ -461,13 +457,13 @@ export default function CampaignsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest">
                 When should the AI run?
               </label>
               <select
                 value={formData.schedule_type}
                 onChange={(e) => setFormData({ ...formData, schedule_type: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] transition-all appearance-none"
               >
                 <option value="manual">Manual (I&apos;ll trigger it myself)</option>
                 <option value="hourly">Automatically — Every Hour</option>
@@ -476,13 +472,13 @@ export default function CampaignsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest">
                 Which website should it post to?
               </label>
               <select
                 value={formData.target_site_id}
                 onChange={(e) => setFormData({ ...formData, target_site_id: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg px-4 py-2 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] transition-all appearance-none"
               >
                 <option value="">No site selected yet</option>
                 {sites.map((s) => (
@@ -536,30 +532,30 @@ export default function CampaignsPage() {
             </div>
           )}
 
-          <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 space-y-4">
-            <h4 className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-2">
-              <Zap className="w-3 h-3" /> AI Writing Settings
+          <div className="p-5 bg-white border items-center border-[#E5E8EB] rounded-2xl space-y-5 shadow-sm mt-4">
+            <h4 className="text-[11px] font-black text-[#1A1D23] uppercase tracking-widest flex items-center gap-2 border-b border-[#E5E8EB] pb-3">
+              <Zap className="w-4 h-4 text-[#FF642D]" /> AI Writing Settings
             </h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
+                <label className="block text-[11px] uppercase font-black text-[#9CA3AF] mb-2 tracking-wide">
                   How long should each article be? (words)
                 </label>
                 <input
                   type="number"
                   value={formData.target_word_count}
                   onChange={(e) => setFormData({ ...formData, target_word_count: parseInt(e.target.value) })}
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground"
+                  className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
+                <label className="block text-[11px] uppercase font-black text-[#9CA3AF] mb-2 tracking-wide">
                   Writing Style
                 </label>
                 <select
                   value={formData.article_style}
                   onChange={(e) => setFormData({ ...formData, article_style: e.target.value })}
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                  className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 appearance-none"
                 >
                   <option value="informative">Informative / Wiki-style</option>
                   <option value="conversational">Conversational / Blog-style</option>
@@ -570,15 +566,15 @@ export default function CampaignsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-2 gap-5 mt-4">
               <div>
-                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
+                <label className="block text-[11px] uppercase font-black text-[#9CA3AF] mb-2 tracking-wide">
                   Language
                 </label>
                 <select
                   value={formData.language}
                   onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                  className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 appearance-none"
                 >
                   <option value="english">English (US)</option>
                   <option value="uk_english">English (UK)</option>
@@ -592,13 +588,13 @@ export default function CampaignsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
+                <label className="block text-[11px] uppercase font-black text-[#9CA3AF] mb-2 tracking-wide">
                   Tone
                 </label>
                 <select
                   value={formData.tone}
                   onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-                  className="w-full bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                  className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 appearance-none"
                 >
                   <option value="professional">Professional & Authoritative</option>
                   <option value="casual">Casual & Friendly</option>
@@ -611,36 +607,36 @@ export default function CampaignsPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1 flex items-center justify-between">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest flex items-center justify-between">
                 <span>Prompt Configuration (Markdown Support OK)</span>
-                <span className="text-primary/50 normal-case font-normal italic">Tip: Use {"{{keyword}}"} to create a Master Template</span>
+                <span className="text-[#FF642D] normal-case font-bold italic">Tip: Use {"{{keyword}}"} to create a Master Template</span>
               </label>
               <textarea
                 value={formData.prompt_template}
                 onChange={(e) => setFormData({ ...formData, prompt_template: e.target.value })}
                 placeholder="Use this for extra AI instructions... OR paste a full Markdown Master Template here (must include {{keyword}})."
-                className="w-full bg-black/40 border border-border rounded-lg px-4 py-3 text-xs font-mono text-emerald-400/90 h-64 outline-none focus:ring-1 focus:ring-primary custom-scrollbar leading-relaxed"
+                className="w-full bg-[#1A1D23] border border-[#000] rounded-xl px-4 py-4 text-[13px] font-mono text-[#10B981] h-64 outline-none focus:ring-2 focus:ring-[#FF642D]/50 custom-scrollbar leading-relaxed placeholder:text-gray-600 shadow-inner"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">
+              <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest">
                 WordPress Post Type (if applicable)
               </label>
               <select
                 value={formData.target_cpt}
                 onChange={(e) => setFormData({ ...formData, target_cpt: e.target.value })}
-                className="w-full bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-primary outline-none"
+                className="w-full bg-[#F9FAFB] border border-[#E5E8EB] rounded-xl px-4 py-3 text-[13px] text-[#1A1D23] font-bold focus:outline-none focus:ring-2 focus:ring-[#FF642D]/20 appearance-none"
               >
                 {postTypes.map((pt) => <option key={pt.slug} value={pt.slug}>{pt.name}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
-            <Button variant="ghost" type="button" onClick={handleCloseModal}>Cancel</Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              {editingCampaign ? 'Save Changes' : 'Create Project'}
+          <div className="pt-6 flex justify-end gap-3 border-t border-[#E5E8EB] mt-4">
+            <Button variant="outline" className="px-6 py-6 border-[#E5E8EB] text-[#1A1D23] font-bold rounded-xl shadow-sm hover:bg-[#F9FAFB]" type="button" onClick={handleCloseModal}>Cancel</Button>
+            <Button type="submit" isLoading={isSubmitting} className="px-6 py-6 bg-[#1A1D23] hover:bg-[#FF642D] text-white font-bold rounded-xl shadow-sm transition-all">
+              {editingCampaign ? 'Save Changes' : 'Initialize Project'}
             </Button>
           </div>
         </form>

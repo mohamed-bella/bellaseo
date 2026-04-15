@@ -12,7 +12,9 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Search,
+  ArrowRight
 } from 'lucide-react';
 import apiClient from '@/services/apiClient';
 import { getSocket } from '@/services/websocketClient';
@@ -86,8 +88,18 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[70vh]">
-        <div className="w-12 h-12 border-4 border-[#FF642D]/20 border-t-[#FF642D] rounded-full animate-spin" />
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[70vh] gap-6">
+        <div className="relative w-20 h-20">
+          <div className="absolute inset-0 bg-[#FF642D]/20 animate-ping rounded-full" style={{ animationDuration: '2s' }} />
+          <div className="absolute inset-2 bg-[#1A1D23] rounded-full flex items-center justify-center z-10 shadow-xl border border-gray-800">
+             <Zap className="w-8 h-8 text-[#FF642D] animate-pulse" />
+          </div>
+          <div className="absolute inset-0 border-[3px] border-[#FF642D] border-t-transparent rounded-full animate-spin" style={{ animationDuration: '3s' }} />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-black tracking-tight text-[#1A1D23] uppercase">Synchronizing Nodes</h2>
+          <p className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em] animate-pulse">Establishing Secure Uplink...</p>
+        </div>
       </div>
     );
   }
@@ -146,6 +158,61 @@ export default function DashboardPage() {
               </span>
               <span className="text-xs font-bold text-[#D1D5DB] lowercase">{stat.unit}</span>
             </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Action Hub (Semrush Style CTAs) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
+        {[
+          {
+            title: 'Keyword Intel',
+            description: 'Discover high-volume, low-competition keywords to fuel your content pipeline.',
+            icon: Search,
+            href: '/keywords',
+            badgeBg: 'bg-blue-50',
+            badgeText: 'text-blue-600',
+            btnText: 'Analyze Keywords',
+          },
+          {
+            title: 'Content Factory',
+            description: 'Launch AI-driven articles perfectly localized to your target language and location.',
+            icon: Zap,
+            href: '/campaigns',
+            badgeBg: 'bg-[#FFF5F0]',
+            badgeText: 'text-[#FF642D]',
+            btnText: 'Start Generation',
+          },
+          {
+            title: 'Site Integrations',
+            description: 'Connect WordPress, Blogger, and custom CMS destinations for auto-publishing.',
+            icon: Globe,
+            href: '/sites',
+            badgeBg: 'bg-emerald-50',
+            badgeText: 'text-emerald-600',
+            btnText: 'Manage Integrations',
+          }
+        ].map((cta, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 + (i * 0.1) }}
+            className="flex flex-col bg-white border border-[#E5E8EB] rounded-[20px] p-7 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.08)] hover:border-[#D1D5DB] transition-all group"
+          >
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:-translate-y-1 ${cta.badgeBg}`}>
+               <cta.icon className={`w-6 h-6 ${cta.badgeText}`} />
+            </div>
+            <h3 className="text-lg font-black text-[#1A1D23] mb-2 tracking-tight">{cta.title}</h3>
+            <p className="text-[13px] text-[#6B7280] leading-relaxed mb-8 flex-1 font-medium">
+              {cta.description}
+            </p>
+            <Link href={cta.href}>
+              <Button className="w-full py-4 bg-white border border-[#E5E8EB] text-[#1A1D23] font-bold text-[13px] rounded-xl group-hover:bg-[#F9FAFB] group-hover:border-[#D1D5DB] transition-all shadow-sm flex items-center justify-center gap-2">
+                {cta.btnText}
+                <ArrowRight className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#1A1D23] transition-colors" />
+              </Button>
+            </Link>
           </motion.div>
         ))}
       </div>

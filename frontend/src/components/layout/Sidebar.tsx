@@ -73,9 +73,23 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
   const [username, setUsername] = useState('Admin');
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    // Handler for responsive resizes
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    // Attach resize listener
+    window.addEventListener('resize', handleResize);
+
+    // Initial check on mount or when pathname changes on mobile/tablet
+    if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
+
     try {
       const userStr = localStorage.getItem('seo_user');
       if (userStr) {
@@ -83,6 +97,8 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
         if (u.username) setUsername(u.username);
       }
     } catch { /* ignore */ }
+
+    return () => window.removeEventListener('resize', handleResize);
   }, [setSidebarOpen, pathname]);
 
   const handleLogout = () => {
@@ -101,17 +117,17 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
       {/* Mobile backdrop */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 h-screen flex flex-col bg-white border-r border-[#E5E8EB] transition-all duration-300 ease-out-quart md:sticky md:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 h-screen flex flex-col bg-white border-r border-[#E5E8EB] transition-all duration-300 ease-out-quart lg:sticky lg:translate-x-0',
           isSidebarOpen
-            ? 'translate-x-0 w-[220px] shadow-xl md:shadow-none'
-            : '-translate-x-full md:w-[64px] md:translate-x-0',
+            ? 'translate-x-0 w-[220px] shadow-xl lg:shadow-none'
+            : '-translate-x-full w-[220px] lg:w-[64px] lg:translate-x-0',
         )}
       >
         {/* ── Logo ───────────────────────────────────────────── */}
@@ -150,7 +166,7 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
                       className={cn(
                         'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 group',
                         isActive
-                          ? 'bg-[#10B981] text-white shadow-sm'
+                          ? 'bg-[#1A1D23] text-white shadow-md'
                           : 'text-[#6B7280] hover:text-[#1A1D23] hover:bg-[#F3F4F6]',
                       )}
                     >
@@ -158,7 +174,7 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
                         className={cn(
                           'shrink-0 transition-colors duration-150',
                           isSidebarOpen ? 'w-4 h-4' : 'w-5 h-5',
-                          isActive ? 'text-white' : 'text-[#9CA3AF] group-hover:text-[#6B7280]',
+                          isActive ? 'text-[#FF642D]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]',
                         )}
                       />
                       {isSidebarOpen && (
