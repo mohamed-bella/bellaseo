@@ -7,7 +7,10 @@ const nextConfig: NextConfig = {
   
   // Whitelist external IPs/Domains for Hot Module Replacement (HMR) WebSockets
   allowedDevOrigins: [
+    "77.42.43.52",
     "77.42.43.52:3000",
+    "http://77.42.43.52:3000",
+    "localhost",
     "localhost:3000",
     "openseo.app.mohamedbella.com"
   ],
