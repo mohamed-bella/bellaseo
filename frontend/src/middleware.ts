@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // temporarily disble auth checking
-  /*
   const token = request.cookies.get('seo_admin_token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -23,7 +21,6 @@ export function middleware(request: NextRequest) {
     const dashboardUrl = new URL('/', request.url);
     return NextResponse.redirect(dashboardUrl);
   }
-  */
 
   return NextResponse.next();
 }

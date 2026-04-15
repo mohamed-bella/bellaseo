@@ -3,11 +3,6 @@ const { API_SECRET } = require('../config/env');
 
 const requireAuth = async (req, res, next) => {
   try {
-    // TEMPORARY LOCAL OVERRIDE: Assign admin privileges to all requests
-    req.user = { id: 'local-bypass', email: 'admin@local.com', role: 'admin' };
-    return next();
-    
-    /* ORIGINAL AUTH CODE DISABLED
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
@@ -20,7 +15,6 @@ const requireAuth = async (req, res, next) => {
       req.user = { id: 'system-cron', email: 'cron@system', role: 'admin' };
       return next();
     }
-    */
     
     // Verify token directly with Supabase Native Auth
     const { data: { user }, error } = await supabase.auth.getUser(token);
