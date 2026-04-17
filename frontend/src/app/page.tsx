@@ -169,7 +169,7 @@ export default function DashboardPage() {
             title: 'Keyword Intel',
             description: 'Discover high-volume, low-competition keywords to fuel your content pipeline.',
             icon: Search,
-            href: '/keywords',
+            href: '/keyword-research',
             badgeBg: 'bg-blue-50',
             badgeText: 'text-blue-600',
             btnText: 'Analyze Keywords',

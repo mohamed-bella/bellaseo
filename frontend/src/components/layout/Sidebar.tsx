@@ -20,6 +20,12 @@ import {
   TrendingUp,
   LogOut,
   User,
+  Bell,
+  SearchCode,
+  ShieldCheck,
+  Network,
+  Users,
+  BookOpen,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useAppStore } from '@/state/store';
@@ -37,18 +43,21 @@ const navGroups = [
   {
     label: 'Overview',
     items: [
-      { name: 'Dashboard',  icon: LayoutDashboard, href: '/' },
-      { name: 'Analytics',  icon: BarChart3,       href: '/analytics' },
+      { name: 'Dashboard',     icon: LayoutDashboard, href: '/' },
+      { name: 'Analytics',     icon: BarChart3,       href: '/analytics' },
+      { name: 'Notifications', icon: Bell,            href: '/notifications' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { name: 'Projects',      icon: FolderKanban, href: '/campaigns'    },
-      { name: 'Keywords',      icon: Hash,         href: '/keywords'     },
-      { name: 'Articles',      icon: FileText,     href: '/articles'     },
-      { name: 'Content Lab',   icon: FlaskConical, href: '/content-lab'  },
-      { name: 'Auto-Publish',  icon: Workflow,     href: '/workflows'    },
+      { name: 'Projects',      icon: FolderKanban, href: '/campaigns'        },
+      { name: 'Keywords',      icon: Hash,         href: '/keywords'         },
+      { name: 'Deep Intel',    icon: SearchCode,   href: '/keyword-research' },
+      { name: 'Articles',      icon: FileText,     href: '/articles'         },
+      { name: 'Content Lab',   icon: FlaskConical, href: '/content-lab'      },
+      { name: 'Auto-Publish',  icon: Workflow,     href: '/workflows'        },
+      { name: 'EEAT Center',   icon: ShieldCheck,  href: '/eeat'             },
     ],
   },
   {
@@ -57,7 +66,10 @@ const navGroups = [
       { name: 'Integrations',    icon: Globe,       href: '/sites'          },
       { name: 'Article Studio',  icon: PenSquare,   href: '/article-config' },
       { name: 'Lead Radar',      icon: Radar,       href: '/radar'          },
+      { name: 'Topical Map',     icon: Network,     href: '/map'            },
+      { name: 'Team',            icon: Users,       href: '/team'           },
       { name: 'Settings',        icon: Settings,    href: '/settings'       },
+      { name: 'Documentation',   icon: BookOpen,    href: '/docs'           },
     ],
   },
 ];
