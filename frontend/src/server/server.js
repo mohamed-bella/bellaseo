@@ -37,7 +37,7 @@ nextApp.prepare().then(() => {
 
   // ─── Socket.IO ────────────────────────────────────────────────────────────────
   const io = new Server(httpServer, {
-    cors: { origin: CORS_ORIGIN, methods: ['GET', 'POST'] },
+    cors: { origin: '*', methods: ['GET', 'POST'] },
     destroyUpgrade: false // Crucial: Allows Next.js HMR to function without Socket.IO destroying the connection
   });
 
@@ -62,7 +62,7 @@ nextApp.prepare().then(() => {
   // ─── Middleware ───────────────────────────────────────────────────────────────
   // Note: helmet is disabled for now to avoid issues with Next.js scripts/styles
   // app.use(helmet()); 
-  app.use(cors({ origin: CORS_ORIGIN }));
+  app.use(cors({ origin: '*' }));
   app.use(express.json({ limit: '5mb' }));
   app.use(morgan('dev'));
 

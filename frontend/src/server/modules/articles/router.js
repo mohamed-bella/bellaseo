@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require('./controller');
 
 router.get('/', controller.list);
+router.get('/:id/link-suggestions', controller.linkSuggestions);
 router.get('/:id', controller.get);
 router.post('/', controller.create);
 router.put('/:id', controller.update);

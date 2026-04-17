@@ -3,6 +3,64 @@ const { ARTICLE_STATUS } = require('../../config/constants');
 const aiService = require('../../services/aiService');
 const wordpressService = require('../../services/wordpressService');
 const bloggerService = require('../../services/bloggerService');
+// Inline schema generator (server-side, no TS)
+function generateSchemaMarkup(article) {
+  const schemas = [];
+
+  function stripHtml(html) {
+    return (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  // Article schema
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.meta_description || stripHtml(article.content).substring(0, 160),
+    datePublished: article.created_at || new Date().toISOString(),
+    dateModified: new Date().toISOString(),
+    author: { '@type': 'Organization', name: 'Editorial Team' },
+  };
+  if (article.published_url) articleSchema.url = article.published_url;
+  if (article.featured_image_url) articleSchema.image = { '@type': 'ImageObject', url: article.featured_image_url };
+  schemas.push(articleSchema);
+
+  // FAQ schema
+  const content = article.content || '';
+  const faqs = [];
+  const sectionPattern = /<h[23][^>]*>(.*?)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = sectionPattern.exec(content)) !== null) {
+    const q = m[1].replace(/<[^>]*>/g, '').trim();
+    const a = m[2].replace(/<[^>]*>/g, '').trim();
+    if (q.length > 10 && a.length > 20 && (q.endsWith('?') || /^(what|how|why|when|where|which|who|can|is|are|do|does|will|should)/i.test(q))) {
+      faqs.push({ question: q, answer: a });
+    }
+    if (faqs.length >= 10) break;
+  }
+  if (faqs.length >= 2) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(f => ({ '@type': 'Question', name: f.question, acceptedAnswer: { '@type': 'Answer', text: f.answer } })),
+    });
+  }
+
+  // HowTo schema
+  if (/<h[12][^>]*>.*?how to.*?<\/h[12]>/i.test(content)) {
+    const listMatch = content.match(/<ol[^>]*>([\s\S]*?)<\/ol>/i);
+    if (listMatch) {
+      const steps = [...listMatch[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+        .map((s, i) => ({ '@type': 'HowToStep', position: i + 1, text: s[1].replace(/<[^>]*>/g, '').trim() }))
+        .filter(s => s.text.length > 10);
+      if (steps.length >= 3) {
+        schemas.push({ '@context': 'https://schema.org', '@type': 'HowTo', name: article.title, step: steps });
+      }
+    }
+  }
+
+  return schemas.map(s => `<script type="application/ld+json">\n${JSON.stringify(s, null, 2)}\n</script>`).join('\n');
+}
 
 async function publishSingleArticle(articleId, io) {
   try {
@@ -28,12 +86,16 @@ async function publishSingleArticle(articleId, io) {
     }
 
     const cleanArticle = { ...article }; delete cleanArticle.keywords;
-    
+
+    // Inject JSON-LD schema markup before content
+    const schemaMarkup = generateSchemaMarkup(cleanArticle);
+    const articleWithSchema = { ...cleanArticle, content: schemaMarkup + '\n' + (cleanArticle.content || '') };
+
     let publishResult;
     if (site.type === 'wordpress') {
-      publishResult = await wordpressService.publishToWordPress(site, cleanArticle, { status: 'publish', post_type: campaign.target_cpt || 'post', featured_image_url: cleanArticle.featured_image_url });
+      publishResult = await wordpressService.publishToWordPress(site, articleWithSchema, { status: 'publish', post_type: campaign.target_cpt || 'post', featured_image_url: cleanArticle.featured_image_url });
     } else if (site.type === 'blogger') {
-      publishResult = await bloggerService.publishToBlogger(site, cleanArticle, { isDraft: false });
+      publishResult = await bloggerService.publishToBlogger(site, articleWithSchema, { isDraft: false });
     }
 
     if (publishResult && publishResult.url) {
@@ -195,8 +257,75 @@ const clearAll = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { 
-  list, get, create, update, updateStatus, 
+// ── Internal Link Suggestions ─────────────────────────────────────────────────
+const linkSuggestions = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch current article
+    const { data: current } = await supabase
+      .from('articles')
+      .select('title, content, keyword_id, keywords(main_keyword, secondary_keywords)')
+      .eq('id', id)
+      .single();
+
+    if (!current) return res.status(404).json({ error: 'Article not found' });
+
+    // Fetch candidate articles (published or approved, exclude self)
+    const { data: candidates } = await supabase
+      .from('articles')
+      .select('id, title, slug, published_url, status, keywords(main_keyword)')
+      .in('status', [ARTICLE_STATUS.PUBLISHED, ARTICLE_STATUS.APPROVED])
+      .neq('id', id)
+      .limit(100);
+
+    if (!candidates || candidates.length === 0) return res.json([]);
+
+    // Build a word-frequency map for current article
+    function tokenize(text) {
+      return (text || '')
+        .toLowerCase()
+        .replace(/<[^>]*>/g, ' ')
+        .split(/\W+/)
+        .filter(w => w.length > 3);
+    }
+
+    const stopWords = new Set(['that', 'this', 'with', 'from', 'have', 'been', 'will', 'they', 'their', 'also', 'more', 'your', 'what', 'when', 'which', 'into', 'than', 'then', 'some', 'most', 'over', 'such', 'these', 'those', 'were', 'where', 'just', 'like', 'very']);
+
+    const currentWords = new Set(tokenize(`${current.title} ${current.keywords?.main_keyword || ''} ${current.content}`).filter(w => !stopWords.has(w)));
+
+    const scored = candidates.map(c => {
+      const candidateWords = tokenize(`${c.title} ${c.keywords?.main_keyword || ''}`).filter(w => !stopWords.has(w));
+      const overlap = candidateWords.filter(w => currentWords.has(w)).length;
+      const relevance = candidateWords.length > 0 ? overlap / Math.max(candidateWords.length, 5) : 0;
+
+      // Derive anchor text from candidate keyword or title
+      const kw = c.keywords?.main_keyword || '';
+      const anchorText = kw.length > 0 && kw.length < 50 ? kw : c.title.split(' ').slice(0, 5).join(' ');
+
+      return {
+        id: c.id,
+        title: c.title,
+        slug: c.slug || c.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        published_url: c.published_url,
+        main_keyword: kw,
+        anchor_text: anchorText,
+        relevance: Math.min(1, relevance),
+      };
+    });
+
+    // Return top 8 by relevance, minimum 0.05 score
+    const results = scored
+      .filter(s => s.relevance >= 0.05)
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, 8);
+
+    res.json(results);
+  } catch (err) { next(err); }
+};
+
+module.exports = {
+  list, get, create, update, updateStatus,
   approve, reject, regenerate, clearAll,
-  bulkDelete, bulkUpdateStatus
+  bulkDelete, bulkUpdateStatus, linkSuggestions
 };

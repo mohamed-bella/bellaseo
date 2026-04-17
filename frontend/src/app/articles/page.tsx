@@ -7,7 +7,7 @@ import {
   XCircle, Sparkles, ImageOff, AlertTriangle,
   FileEdit, Globe, Ban, ChevronDown, Filter,
   MoreVertical, CheckSquare, Square, Loader2,
-  Activity
+  Activity, TimerReset
 } from 'lucide-react';
 import { FcOpenedFolder } from 'react-icons/fc';
 import Button from '@/components/ui/Button';
@@ -36,6 +36,17 @@ interface Article {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
+const STALE_DAYS = 90;
+
+function isStale(createdAt: string): boolean {
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  return ageMs > STALE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+function daysOld(createdAt: string): number {
+  return Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function readingTime(wordCount: number) {
   const mins = Math.ceil((wordCount || 0) / 200);
   return `${mins} min read`;
@@ -68,6 +79,7 @@ export default function ArticlesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
+  const [staleOnly, setStaleOnly] = useState(false);
 
   // Bulk Actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -103,20 +115,23 @@ export default function ArticlesPage() {
     };
   }, []);
 
+  const staleCount = useMemo(() => articles.filter(a => a.status === 'published' && isStale(a.created_at)).length, [articles]);
+
   const filtered = useMemo(() =>
     articles.filter(a => {
       const q = searchQuery.toLowerCase();
       const statusMatch = !statusFilter || a.status === statusFilter;
       const projectMatch = !projectFilter || a.keywords?.campaign_id === projectFilter;
       const queryMatch = !q || a.title.toLowerCase().includes(q) || (a.keywords?.main_keyword || '').toLowerCase().includes(q);
-      return statusMatch && projectMatch && queryMatch;
+      const staleMatch = !staleOnly || (a.status === 'published' && isStale(a.created_at));
+      return statusMatch && projectMatch && queryMatch && staleMatch;
     }),
-    [articles, statusFilter, projectFilter, searchQuery]
+    [articles, statusFilter, projectFilter, searchQuery, staleOnly]
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, projectFilter]);
+  }, [searchQuery, statusFilter, projectFilter, staleOnly]);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginatedList = useMemo(() => {
@@ -210,8 +225,44 @@ export default function ArticlesPage() {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
            </div>
+
+           {/* Stale filter toggle */}
+           <button
+             onClick={() => setStaleOnly(v => !v)}
+             className={`flex items-center gap-2 px-4 h-12 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
+               staleOnly
+                 ? 'bg-amber-500/15 border-amber-500/40 text-amber-500'
+                 : 'bg-secondary/50 border-border text-muted-foreground hover:text-foreground'
+             }`}
+           >
+             <TimerReset className="w-3.5 h-3.5" />
+             Needs Refresh
+             {staleCount > 0 && (
+               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${staleOnly ? 'bg-amber-500 text-white' : 'bg-amber-500/20 text-amber-500'}`}>
+                 {staleCount}
+               </span>
+             )}
+           </button>
         </div>
       </div>
+
+      {/* STALE ARTICLES BANNER */}
+      {staleCount > 0 && !staleOnly && (
+        <div className="bg-amber-500/8 border border-amber-500/20 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <TimerReset className="w-4 h-4 text-amber-500 shrink-0" />
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              <strong>{staleCount}</strong> published article{staleCount > 1 ? 's are' : ' is'} older than {STALE_DAYS} days and may need a refresh to maintain rankings.
+            </p>
+          </div>
+          <button
+            onClick={() => setStaleOnly(true)}
+            className="text-xs font-black uppercase tracking-widest text-amber-500 hover:text-amber-400 whitespace-nowrap transition-colors"
+          >
+            View All →
+          </button>
+        </div>
+      )}
 
       {/* BULK ACTION BAR (Conditional) */}
       {selectedIds.size > 0 && (
@@ -273,8 +324,9 @@ export default function ArticlesPage() {
                 </tr>
               ) : paginatedList.map(art => {
                 const style = STATUS_STYLING[art.status] || STATUS_STYLING.draft;
+                const articleIsStale = art.status === 'published' && isStale(art.created_at);
                 return (
-                  <tr key={art.id} className={`group hover:bg-secondary/20 transition-colors ${selectedIds.has(art.id) ? 'bg-primary/5' : ''}`}>
+                  <tr key={art.id} className={`group hover:bg-secondary/20 transition-colors ${selectedIds.has(art.id) ? 'bg-primary/5' : ''} ${articleIsStale ? 'border-l-2 border-amber-500/40' : ''}`}>
                     <td className="p-5">
                        <button onClick={() => toggleSelect(art.id)} className="text-muted-foreground hover:text-primary transition-colors">
                          {selectedIds.has(art.id) ? <CheckSquare className="w-5 h-5 text-primary" /> : <Square className="w-5 h-5" />}
@@ -284,12 +336,19 @@ export default function ArticlesPage() {
                        <div className="flex items-start gap-3">
                           <FcOpenedFolder className="w-6 h-6 shrink-0 mt-0.5" />
                           <div className="flex flex-col">
-                             <button 
-                               onClick={() => { setSelectedArticle(art); setIsModalOpen(true); }}
-                               className="font-bold text-foreground text-sm hover:text-primary transition-colors text-left line-clamp-1 leading-tight"
-                             >
-                               {art.title}
-                             </button>
+                             <div className="flex items-center gap-2">
+                               <button
+                                 onClick={() => { setSelectedArticle(art); setIsModalOpen(true); }}
+                                 className="font-bold text-foreground text-sm hover:text-primary transition-colors text-left line-clamp-1 leading-tight"
+                               >
+                                 {art.title}
+                               </button>
+                               {articleIsStale && (
+                                 <span className="shrink-0 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                                   <TimerReset className="w-2.5 h-2.5" /> {daysOld(art.created_at)}d old
+                                 </span>
+                               )}
+                             </div>
                              <div className="flex items-center gap-2 mt-1.5 overflow-hidden">
                                 <Tag className="w-3 h-3 text-muted-foreground shrink-0" />
                                 <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest truncate">
