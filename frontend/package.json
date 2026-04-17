@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
-    "dev:unified": "cross-env NODE_OPTIONS=--max-old-space-size=4096 node src/server/server.js",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 node src/server/server.js",
+    "dev:next-only": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next build",
     "start": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next start",
     "start:unified": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=4096 node src/server/server.js",
@@ -25,6 +25,7 @@
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.22.1",

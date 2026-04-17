@@ -47,27 +47,23 @@ export default function DashboardPage() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [c, k, a, w, logs, wa, s] = await Promise.all([
-        apiClient.get('/campaigns'),
-        apiClient.get('/keywords'),
-        apiClient.get('/articles'),
-        apiClient.get('/workflows?status=generating,publishing'),
-        apiClient.get('/logs?limit=12'),
-        apiClient.get('/notifications/whatsapp/status'),
-        apiClient.get('/sites'),
-      ]);
-
+      const { data } = await apiClient.get('/dashboard/stats');
       setStats({
-        activeSites: s.data.length,
-        totalCampaigns: c.data.length,
-        totalKeywords: k.data.length,
-        publishedArticles: a.data.filter((art: any) => art.status === 'published').length,
+        activeSites: data.activeSites ?? 0,
+        totalCampaigns: data.totalCampaigns ?? 0,
+        totalKeywords: data.totalKeywords ?? 0,
+        publishedArticles: data.publishedArticles ?? 0,
       });
-      setActiveWorkflows(w.data);
-      setRecentLogs(logs.data);
-      setWhatsappStatus(wa.data);
-    } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
+      setActiveWorkflows(data.activeWorkflows ?? []);
+      setRecentLogs(data.recentLogs ?? []);
+      setWhatsappStatus({ connected: data.whatsappConnected ?? false });
+    } catch (err: any) {
+      // Fallback: server may not have restarted yet with new route
+      if (err?.response?.status === 404) {
+        console.warn('[Dashboard] /dashboard/stats not found — restart server with: npm run dev');
+      } else {
+        console.error('Failed to fetch dashboard data:', err);
+      }
     } finally {
       setIsLoading(false);
     }

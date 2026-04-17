@@ -6,6 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 
 const { PORT, CORS_ORIGIN } = require('./config/env');
 
@@ -26,6 +27,7 @@ const settingsRoutes = require('./modules/settings/router');
 const clusterRoutes = require('./modules/clusters/router');
 const radarRoutes = require('./modules/radar/router');
 const authRoutes = require('./modules/auth/router');
+const dashboardRoutes = require('./modules/dashboard/router');
 const { requireAuth } = require('./middleware/auth');
 const { initScheduler } = require('./services/schedulerService');
 const { initWhatsApp } = require('./services/whatsappService');
@@ -60,8 +62,9 @@ nextApp.prepare().then(() => {
   });
 
   // ─── Middleware ───────────────────────────────────────────────────────────────
+  app.use(compression());
   // Note: helmet is disabled for now to avoid issues with Next.js scripts/styles
-  // app.use(helmet()); 
+  // app.use(helmet());
   app.use(cors({ origin: '*' }));
   app.use(express.json({ limit: '5mb' }));
   app.use(morgan('dev'));
@@ -76,11 +79,24 @@ nextApp.prepare().then(() => {
   app.use('/api', limiter);
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime() });
+    res.json({ status: 'ok', uptime: process.uptime(), port: PORT });
+  });
+
+  app.get('/api/health/db', async (req, res) => {
+    const supabase = require('./config/database');
+    const { data, error } = await supabase.from('campaigns').select('id').limit(1);
+    if (error) {
+      console.error('[DB Health] Query failed:', error.message);
+      return res.status(500).json({ status: 'error', message: error.message, code: error.code });
+    }
+    res.json({ status: 'ok', connected: true, sample: data });
   });
 
   // Public Auth
   app.use('/api/auth', authRoutes);
+
+  // Dashboard stats (single fast endpoint)
+  app.use('/api/dashboard', requireAuth, dashboardRoutes);
 
   // Protected application routes
   app.use('/api/campaigns', requireAuth, campaignRoutes);

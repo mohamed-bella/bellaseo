@@ -4,28 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard,
-  BarChart3,
-  FolderKanban,
-  Hash,
-  FileText,
-  FlaskConical,
-  Workflow,
-  Globe,
-  PenSquare,
-  Radar,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-  LogOut,
-  User,
-  Bell,
-  SearchCode,
-  ShieldCheck,
-  Network,
-  Users,
-  BookOpen,
+  LayoutDashboard, BarChart3, FolderKanban, Hash, FileText,
+  FlaskConical, Workflow, Globe, PenSquare, Radar, Settings,
+  ChevronLeft, ChevronRight, TrendingUp, LogOut, User, Bell,
+  SearchCode, ShieldCheck, Network, Users, BookOpen,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useAppStore } from '@/state/store';
@@ -39,37 +21,38 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Each item gets a unique accent color (hex)
 const navGroups = [
   {
     label: 'Overview',
     items: [
-      { name: 'Dashboard',     icon: LayoutDashboard, href: '/' },
-      { name: 'Analytics',     icon: BarChart3,       href: '/analytics' },
-      { name: 'Notifications', icon: Bell,            href: '/notifications' },
+      { name: 'Dashboard',     icon: LayoutDashboard, href: '/',              color: '#8B5CF6' },
+      { name: 'Analytics',     icon: BarChart3,       href: '/analytics',     color: '#3B82F6' },
+      { name: 'Notifications', icon: Bell,            href: '/notifications', color: '#EC4899' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { name: 'Projects',      icon: FolderKanban, href: '/campaigns'        },
-      { name: 'Keywords',      icon: Hash,         href: '/keywords'         },
-      { name: 'Deep Intel',    icon: SearchCode,   href: '/keyword-research' },
-      { name: 'Articles',      icon: FileText,     href: '/articles'         },
-      { name: 'Content Lab',   icon: FlaskConical, href: '/content-lab'      },
-      { name: 'Auto-Publish',  icon: Workflow,     href: '/workflows'        },
-      { name: 'EEAT Center',   icon: ShieldCheck,  href: '/eeat'             },
+      { name: 'Projects',     icon: FolderKanban, href: '/campaigns',        color: '#F97316' },
+      { name: 'Keywords',     icon: Hash,         href: '/keywords',         color: '#10B981' },
+      { name: 'Deep Intel',   icon: SearchCode,   href: '/keyword-research', color: '#06B6D4' },
+      { name: 'Articles',     icon: FileText,     href: '/articles',         color: '#F43F5E' },
+      { name: 'Content Lab',  icon: FlaskConical, href: '/content-lab',      color: '#A855F7' },
+      { name: 'Auto-Publish', icon: Workflow,     href: '/workflows',        color: '#F59E0B' },
+      { name: 'EEAT Center',  icon: ShieldCheck,  href: '/eeat',             color: '#14B8A6' },
     ],
   },
   {
     label: 'Platform',
     items: [
-      { name: 'Integrations',    icon: Globe,       href: '/sites'          },
-      { name: 'Article Studio',  icon: PenSquare,   href: '/article-config' },
-      { name: 'Lead Radar',      icon: Radar,       href: '/radar'          },
-      { name: 'Topical Map',     icon: Network,     href: '/map'            },
-      { name: 'Team',            icon: Users,       href: '/team'           },
-      { name: 'Settings',        icon: Settings,    href: '/settings'       },
-      { name: 'Documentation',   icon: BookOpen,    href: '/docs'           },
+      { name: 'Integrations',   icon: Globe,      href: '/sites',         color: '#6366F1' },
+      { name: 'Article Studio', icon: PenSquare,  href: '/article-config',color: '#84CC16' },
+      { name: 'Lead Radar',     icon: Radar,      href: '/radar',         color: '#EF4444' },
+      { name: 'Topical Map',    icon: Network,    href: '/map',           color: '#0EA5E9' },
+      { name: 'Team',           icon: Users,      href: '/team',          color: '#D946EF' },
+      { name: 'Settings',       icon: Settings,   href: '/settings',      color: '#94A3B8' },
+      { name: 'Documentation',  icon: BookOpen,   href: '/docs',          color: '#22C55E' },
     ],
   },
 ];
@@ -79,28 +62,18 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ dynamicBranding }: SidebarProps) {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname = usePathname();
+  const router   = useRouter();
   const { isSidebarOpen, setSidebarOpen } = useAppStore();
   const [username, setUsername] = useState('Admin');
 
   useEffect(() => {
-    // Handler for responsive resizes
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
-      }
+      if (window.innerWidth < 1024) setSidebarOpen(false);
+      else setSidebarOpen(true);
     };
-
-    // Attach resize listener
     window.addEventListener('resize', handleResize);
-
-    // Initial check on mount or when pathname changes on mobile/tablet
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
+    if (window.innerWidth < 1024) setSidebarOpen(false);
 
     try {
       const userStr = localStorage.getItem('seo_user');
@@ -120,8 +93,8 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
     window.location.href = '/login';
   };
 
-  const brandName  = dynamicBranding?.name        || BRANDING.name;
-  const iconName   = dynamicBranding?.iconName     || BRANDING?.logo?.iconName || 'TrendingUp';
+  const brandName  = dynamicBranding?.name    || BRANDING.name;
+  const iconName   = dynamicBranding?.iconName || BRANDING?.logo?.iconName || 'TrendingUp';
   const DynamicIcon = (LucideIcons as any)[iconName] || TrendingUp;
 
   return (
@@ -136,30 +109,34 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 h-screen flex flex-col bg-white border-r border-[#E5E8EB] transition-all duration-300 ease-out-quart lg:sticky lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 h-screen flex flex-col transition-all duration-300 ease-out lg:sticky lg:translate-x-0',
+          'bg-white border-r border-[#F0F0F0]',
           isSidebarOpen
             ? 'translate-x-0 w-[220px] shadow-xl lg:shadow-none'
             : '-translate-x-full w-[220px] lg:w-[64px] lg:translate-x-0',
         )}
       >
-        {/* ── Logo ───────────────────────────────────────────── */}
-        <div className="flex items-center gap-2.5 px-4 h-[56px] border-b border-[#E5E8EB] shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-[#FF642D] flex items-center justify-center shrink-0 shadow-sm">
+        {/* ── Logo ─────────────────────────────────────── */}
+        <div className="flex items-center gap-2.5 px-4 h-[56px] border-b border-[#F0F0F0] shrink-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'linear-gradient(135deg, #FF642D 0%, #FF8C42 100%)', boxShadow: '0 2px 10px rgba(255,100,45,0.35)' }}
+          >
             <DynamicIcon className="w-4 h-4 text-white" />
           </div>
           {isSidebarOpen && (
-            <span className="font-bold text-[15px] tracking-tight text-[#1A1D23] truncate leading-none">
+            <span className="font-black text-[15px] tracking-tight text-[#1A1D23] truncate leading-none">
               {brandName}
             </span>
           )}
         </div>
 
-        {/* ── Navigation ─────────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+        {/* ── Navigation ───────────────────────────────── */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5 custom-scrollbar">
           {navGroups.map((group) => (
             <div key={group.label}>
               {isSidebarOpen && (
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF] px-3 mb-1 mt-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#B0B7C3] px-3 mb-2">
                   {group.label}
                 </p>
               )}
@@ -169,28 +146,62 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
                     pathname === item.href ||
                     (item.href !== '/' && pathname.startsWith(item.href));
                   const Icon = item.icon;
+                  const c = item.color;
 
                   return (
                     <Link
                       key={item.name}
                       href={item.href}
+                      prefetch={true}
                       title={!isSidebarOpen ? item.name : undefined}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-150 group',
-                        isActive
-                          ? 'bg-[#1A1D23] text-white shadow-md'
-                          : 'text-[#6B7280] hover:text-[#1A1D23] hover:bg-[#F3F4F6]',
+                        'flex items-center gap-3 px-2 py-1.5 rounded-xl transition-all duration-150 group relative',
                       )}
+                      style={isActive ? {
+                        background: `${c}15`,
+                        boxShadow: `inset 0 0 0 1px ${c}25`,
+                      } : {}}
                     >
-                      <Icon
+                      {/* Always-colored icon bubble */}
+                      <div
                         className={cn(
-                          'shrink-0 transition-colors duration-150',
-                          isSidebarOpen ? 'w-4 h-4' : 'w-5 h-5',
-                          isActive ? 'text-[#FF642D]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]',
+                          'shrink-0 flex items-center justify-center rounded-lg transition-all duration-150',
+                          isSidebarOpen ? 'w-7 h-7' : 'w-8 h-8',
                         )}
-                      />
+                        style={{
+                          background: `${c}18`,
+                          boxShadow: isActive ? `0 2px 8px ${c}30` : 'none',
+                        }}
+                      >
+                        <Icon
+                          className={cn(isSidebarOpen ? 'w-3.5 h-3.5' : 'w-4 h-4')}
+                          style={{ color: c }}
+                        />
+                      </div>
+
                       {isSidebarOpen && (
-                        <span className="truncate">{item.name}</span>
+                        <span
+                          className="truncate text-[13px] font-semibold transition-colors duration-150"
+                          style={{ color: isActive ? c : '#4B5563' }}
+                        >
+                          {item.name}
+                        </span>
+                      )}
+
+                      {/* Active left accent bar */}
+                      {isActive && (
+                        <div
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
+                          style={{ background: c }}
+                        />
+                      )}
+
+                      {/* Hover overlay */}
+                      {!isActive && (
+                        <div
+                          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none"
+                          style={{ background: `${c}0A` }}
+                        />
                       )}
                     </Link>
                   );
@@ -200,18 +211,18 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
           ))}
         </nav>
 
-        {/* ── User Footer ────────────────────────────────────── */}
+        {/* ── User Footer ──────────────────────────────── */}
         {isSidebarOpen && (
-          <div className="shrink-0 border-t border-[#E5E8EB] p-3">
+          <div className="shrink-0 border-t border-[#F0F0F0] p-3">
             <div className="flex items-center gap-2.5 px-1">
-              <div className="w-7 h-7 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
-                <User className="w-3.5 h-3.5 text-[#FF642D]" />
+              <div className="w-7 h-7 rounded-full bg-[#F3F4F6] flex items-center justify-center shrink-0">
+                <User className="w-3.5 h-3.5 text-[#9CA3AF]" />
               </div>
-              <span className="text-[13px] font-medium text-[#1A1D23] flex-1 truncate">{username}</span>
+              <span className="text-[13px] font-medium text-[#374151] flex-1 truncate">{username}</span>
               <button
                 onClick={handleLogout}
                 title="Log out"
-                className="p-1.5 rounded-md hover:bg-red-50 text-[#9CA3AF] hover:text-red-500 transition-colors"
+                className="p-1.5 rounded-lg hover:bg-red-50 text-[#C4C9D4] hover:text-red-500 transition-colors"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -219,10 +230,10 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
           </div>
         )}
 
-        {/* ── Collapse Toggle ─────────────────────────────────── */}
+        {/* ── Collapse Toggle ───────────────────────────── */}
         <button
           onClick={() => setSidebarOpen(!isSidebarOpen)}
-          className="shrink-0 flex items-center justify-center h-10 border-t border-[#E5E8EB] text-[#9CA3AF] hover:text-[#6B7280] hover:bg-gray-50 transition-colors"
+          className="shrink-0 flex items-center justify-center h-9 border-t border-[#F0F0F0] text-[#C4C9D4] hover:text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
           title={isSidebarOpen ? 'Collapse' : 'Expand'}
         >
           {isSidebarOpen

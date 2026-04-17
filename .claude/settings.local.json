@@ -6,7 +6,10 @@
       "Bash(npm install *)",
       "Bash(node -e \"const t = require\\('/c/Users/Windows/Desktop/PROJECTS/v2_SEO_GEN/frontend/node_modules/@tiptap/react'\\); console.log\\(Object.keys\\(t\\).slice\\(0,10\\)\\)\")",
       "Bash(node -e \"const t = require\\('@tiptap/react'\\); console.log\\(Object.keys\\(t\\).slice\\(0,10\\)\\)\")",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(curl -s http://localhost:3000/api/dashboard/stats -H \"Authorization: Bearer test\")",
+      "Bash(curl *)",
+      "Bash(xargs ls *)"
     ]
   }
 }

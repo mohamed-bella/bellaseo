@@ -13,6 +13,7 @@ const list = async (req, res, next) => {
     
     const { data, error } = await query;
     if (error) throw error;
+    res.set('Cache-Control', 'private, max-age=15, stale-while-revalidate=30');
     res.json(data);
   } catch (err) { next(err); }
 };

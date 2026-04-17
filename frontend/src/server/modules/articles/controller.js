@@ -114,9 +114,13 @@ async function publishSingleArticle(articleId, io) {
 
 const list = async (req, res, next) => {
   try {
-    const { keyword_id, status, search, campaign_id, has_research } = req.query;
-    let query = supabase.from('articles').select('*, keywords!inner(main_keyword, campaign_id, campaigns(name))').order('created_at', { ascending: false });
-    
+    const { keyword_id, status, search, campaign_id, has_research, limit = 200, offset = 0 } = req.query;
+    let query = supabase
+      .from('articles')
+      .select('id, title, slug, meta_description, word_count, status, published_url, featured_image_url, created_at, keyword_id, keywords!inner(main_keyword, campaign_id, campaigns(name))')
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+
     if (keyword_id) query = query.eq('keyword_id', keyword_id);
     if (status) query = query.eq('status', status);
     if (search) query = query.ilike('title', `%${search}%`);
@@ -125,6 +129,7 @@ const list = async (req, res, next) => {
 
     const { data, error } = await query;
     if (error) throw error;
+    res.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=20');
     res.json(data);
   } catch (err) { next(err); }
 };

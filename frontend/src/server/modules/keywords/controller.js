@@ -4,13 +4,18 @@ const { analyzeKeyword: runAnalysis } = require('../../services/keywordResearchS
 
 const list = async (req, res, next) => {
   try {
-    const { campaign_id, status, search } = req.query;
-    let query = supabase.from('keywords').select('*').order('created_at', { ascending: false });
+    const { campaign_id, status, search, limit = 500, offset = 0 } = req.query;
+    let query = supabase
+      .from('keywords')
+      .select('id, campaign_id, cluster_id, main_keyword, secondary_keywords, intent, difficulty, status, is_pillar, volume_score, kd, created_at, updated_at')
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
     if (campaign_id) query = query.eq('campaign_id', campaign_id);
     if (status) query = query.eq('status', status);
     if (search) query = query.ilike('main_keyword', `%${search}%`);
     const { data, error } = await query;
     if (error) throw error;
+    res.set('Cache-Control', 'private, max-age=10, stale-while-revalidate=20');
     res.json(data);
   } catch (err) { next(err); }
 };
