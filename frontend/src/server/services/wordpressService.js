@@ -260,9 +260,20 @@ async function publishToWordPress(site, article, options = {}) {
   } catch (err) {
     const body = err.response?.data ? JSON.stringify(err.response.data) : 'No response body';
     console.error(`[wordpress] Publish failed to ${namespace}/${endpoint}:`, err.message, body);
+    
     // Re-throw with more context
-    const betterMsg = err.response?.data?.message || err.message;
-    const error = new Error(`${betterMsg} (Body: ${body})`);
+    let betterMsg = err.response?.data?.message || err.message;
+    
+    // Map specific WordPress error codes to user-friendly advice
+    if (err.response?.data?.code === 'rest_cannot_create') {
+      betterMsg = "Permission Denied: Your WordPress user account doesn't have permission to create posts. Please ensure the user role is 'Author', 'Editor', or 'Administrator'.";
+    } else if (err.response?.status === 401) {
+      betterMsg = "Authentication Failed: Check your Application Password. Ensure you're not using your normal login password.";
+    } else if (err.response?.status === 403) {
+      betterMsg = "Access Forbidden: A security plugin (like Wordfence) might be blocking the REST API request.";
+    }
+
+    const error = new Error(`${betterMsg} (Status: ${err.response?.status || 'Unknown'})`);
     error.response = err.response;
     throw error;
   }

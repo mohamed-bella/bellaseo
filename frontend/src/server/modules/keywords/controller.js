@@ -7,7 +7,7 @@ const list = async (req, res, next) => {
     const { campaign_id, status, search, limit = 500, offset = 0 } = req.query;
     let query = supabase
       .from('keywords')
-      .select('id, campaign_id, cluster_id, main_keyword, secondary_keywords, intent, difficulty, status, is_pillar, volume_score, kd, created_at, updated_at')
+      .select('id, campaign_id, cluster_id, main_keyword, secondary_keywords, intent, difficulty, status, is_pillar, volume_score, created_at, updated_at')
       .order('created_at', { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
     if (campaign_id) query = query.eq('campaign_id', campaign_id);

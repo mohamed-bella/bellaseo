@@ -19,6 +19,12 @@ export function invalidate(prefix: string): void {
   }
 }
 
+export function clearAll(): number {
+  const count = store.size;
+  store.clear();
+  return count;
+}
+
 export async function cachedGet(
   fetcher: () => Promise<any>,
   key: string,

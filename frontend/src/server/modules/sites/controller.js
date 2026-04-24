@@ -88,14 +88,32 @@ const testConnection = async (req, res, next) => {
     const creds = JSON.parse(site.credentials_json);
     if (site.type === 'wordpress') {
       const token = Buffer.from(`${creds.username}:${creds.app_password}`).toString('base64');
+      const authHeader = { Authorization: `Basic ${token}` };
+
+      // 1. Check Authentication
       const resp = await axios.get(`${site.api_url}/wp-json/wp/v2/users/me`, {
-        headers: { Authorization: `Basic ${token}` },
+        headers: authHeader,
         timeout: 8000,
       });
-      return res.json({ success: true, user: resp.data.name });
-    }
 
-    res.json({ success: true, message: 'Connection test passed' });
+      // 2. Check Permissions (Check if user can view posts in 'edit' context)
+      try {
+        await axios.get(`${site.api_url}/wp-json/wp/v2/posts`, {
+          params: { context: 'edit', per_page: 1 },
+          headers: authHeader,
+          timeout: 5000,
+        });
+      } catch (permErr) {
+        if (permErr.response?.status === 401 || permErr.response?.status === 403) {
+          return res.json({ 
+            success: false, 
+            error: `Authenticated as ${resp.data.name}, but lacks post creation permissions. Root cause: User role is likely 'Subscriber'. Upgrade to 'Author' or higher.` 
+          });
+        }
+      }
+
+      return res.json({ success: true, user: resp.data.name, role: resp.data.roles?.join(', ') });
+    }
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }

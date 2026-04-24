@@ -58,6 +58,25 @@ export default function SitesDocPage() {
                  <li>Copy the generated 24-character password.</li>
                  <li>Return to your Platform Dashboard and paste it into the credentials field under Manage Sites.</li>
                </ol>
+
+               <h2 className="text-2xl font-bold text-[#1A1D23] border-b border-[#E5E8EB] pb-2 mt-12 mb-4">Troubleshooting 401 Permission Errors</h2>
+               
+               <div className="grid grid-cols-1 gap-6 mt-6">
+                 <div className="bg-rose-50 border border-rose-100 rounded-xl p-6">
+                   <h4 className="text-rose-900 font-bold mb-2 m-0 flex items-center gap-2">
+                     <Settings className="w-5 h-5" /> "Sorry, you are not allowed to create posts" (401)
+                   </h4>
+                   <p className="text-rose-800 text-sm mb-4 leading-relaxed">
+                     This error (<code>rest_cannot_create</code>) means WordPress recognized your login, but that user doesn't have the "Capability" to create content.
+                   </p>
+                   <ul className="text-sm space-y-2 text-rose-800 font-medium">
+                     <li>• <strong>Check User Role:</strong> The user must be an <em>Author</em>, <em>Editor</em>, or <em>Administrator</em>. Role "Subscriber" or "Contributor" will fail to publish.</li>
+                     <li>• <strong>Application Password:</strong> Ensure you are using the 24-character code, NOT your normal login password.</li>
+                     <li>• <strong>Security Plugins:</strong> Wordfence, WPS Hide Login, or "Disable REST API" plugins can block these requests. Whitelist your server IP if necessary.</li>
+                     <li>• <strong>CPT Support:</strong> If publishing to a Custom Post Type, ensure <code>show_in_rest</code> is set to <code>true</code> in your theme/plugin code.</li>
+                   </ul>
+                 </div>
+               </div>
             </div>
           </motion.div>
         </div>

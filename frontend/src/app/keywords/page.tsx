@@ -138,7 +138,6 @@ export default function KeywordsPage() {
     try {
       await apiClient.put(`/keywords/${activeResearch.id}`, {
         volume_score: activeResearch.volume_score,
-        kd: activeResearch.kd,
       });
       fetchData();
       setIsResearchModalOpen(false);

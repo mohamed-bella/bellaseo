@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Bell, Search, Menu, Trash2, CheckCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/state/store';
+import { clearAll } from '@/lib/apiCache';
 
 export default function Header() {
   const router = useRouter();
   const { isSidebarOpen, setSidebarOpen } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [hasNotifications, setHasNotifications] = useState(false);
+  const [purgeState, setPurgeState] = useState<'idle' | 'clearing' | 'done'>('idle');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,6 +19,27 @@ export default function Header() {
       router.push(`/articles?search=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  const handlePurgeCache = useCallback(async () => {
+    if (purgeState !== 'idle') return;
+    setPurgeState('clearing');
+
+    // 1. Clear frontend in-memory API cache
+    const count = clearAll();
+
+    // 2. Clear browser fetch/image cache via Cache API if available
+    if (typeof caches !== 'undefined') {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+
+    // 3. Brief "done" flash, then force Next.js router refresh
+    setPurgeState('done');
+    setTimeout(() => {
+      setPurgeState('idle');
+      router.refresh(); // re-fetches all server components
+    }, 1200);
+  }, [purgeState, router]);
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between px-5 bg-white border-b border-[#E5E8EB] h-[56px] shrink-0">
@@ -44,7 +67,39 @@ export default function Header() {
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+
+        {/* ── Purge Cache button ── */}
+        <button
+          onClick={handlePurgeCache}
+          disabled={purgeState !== 'idle'}
+          title="Purge all cached API responses and reload"
+          className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all border ${
+            purgeState === 'done'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+              : purgeState === 'clearing'
+              ? 'bg-[#FFF5F0] border-[#FDDDD0] text-[#FF642D] opacity-70'
+              : 'bg-[#F9FAFB] border-[#E5E8EB] text-[#9CA3AF] hover:bg-[#FFF5F0] hover:border-[#FDDDD0] hover:text-[#FF642D]'
+          }`}
+        >
+          {purgeState === 'done' ? (
+            <>
+              <CheckCheck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cleared</span>
+            </>
+          ) : purgeState === 'clearing' ? (
+            <>
+              <Trash2 className="w-3.5 h-3.5 animate-pulse" />
+              <span className="hidden sm:inline">Purging…</span>
+            </>
+          ) : (
+            <>
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Purge Cache</span>
+            </>
+          )}
+        </button>
+
         {/* Notification bell */}
         <button
           onClick={() => setHasNotifications(false)}
@@ -60,7 +115,7 @@ export default function Header() {
         {/* Divider */}
         <div className="h-6 w-px bg-[#E5E8EB] mx-1" />
 
-        {/* Support Hub badge */}
+        {/* Docs link */}
         <a
           href="https://docs.mohamedbella.com"
           target="_blank"
