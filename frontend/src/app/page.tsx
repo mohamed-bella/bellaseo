@@ -38,6 +38,7 @@ export default function DashboardPage() {
     totalCampaigns: 0,
     totalKeywords: 0,
     publishedArticles: 0,
+    apiKeysConfigured: false,
   });
 
   const [activeWorkflows, setActiveWorkflows] = useState<any[]>([]);
@@ -53,6 +54,7 @@ export default function DashboardPage() {
         totalCampaigns: data.totalCampaigns ?? 0,
         totalKeywords: data.totalKeywords ?? 0,
         publishedArticles: data.publishedArticles ?? 0,
+        apiKeysConfigured: data.apiKeysConfigured ?? false,
       });
       setActiveWorkflows(data.activeWorkflows ?? []);
       setRecentLogs(data.recentLogs ?? []);

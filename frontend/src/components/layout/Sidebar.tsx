@@ -100,7 +100,9 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
   const [health, setHealth] = useState({ sites: 0, keys: false, loading: true });
 
   useEffect(() => {
-    if (!isSidebarOpen) return;
+    // Only fetch health status if sidebar is open AND we are NOT on the dashboard (dashboard already fetches this)
+    if (!isSidebarOpen || pathname === '/') return;
+    
     const checkHealth = async () => {
       try {
         const { data } = await apiClient.get('/dashboard/stats');
@@ -111,8 +113,11 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
         });
       } catch { setHealth(h => ({ ...h, loading: false })); }
     };
-    checkHealth();
-  }, [isSidebarOpen]);
+    
+    // Small delay to ensure any page-load auth spikes are finished
+    const timer = setTimeout(checkHealth, 300);
+    return () => clearTimeout(timer);
+  }, [isSidebarOpen, pathname]);
 
   return (
     <>

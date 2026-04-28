@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import apiClient from '@/services/apiClient';
+import Cookies from 'js-cookie';
 
 interface DashboardWrapperProps {
   children: React.ReactNode;
@@ -15,6 +16,17 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   const [branding, setBranding] = useState<any>(null);
 
   useEffect(() => {
+    // ── Session Repair ──
+    // Synchronize token between Cookie and LocalStorage for maximum stability
+    const cookieToken = Cookies.get('seo_admin_token');
+    const localToken = localStorage.getItem('seo_admin_token');
+    
+    if (localToken && !cookieToken) {
+      Cookies.set('seo_admin_token', localToken, { expires: 7, path: '/' });
+    } else if (cookieToken && !localToken) {
+      localStorage.setItem('seo_admin_token', cookieToken);
+    }
+
     // Skip fetching branding on the login page
     if (pathname?.startsWith('/login')) return;
 

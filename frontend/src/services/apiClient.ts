@@ -16,6 +16,8 @@ apiClient.interceptors.request.use((config) => {
   return config;
 }, (error) => Promise.reject(error));
 
+let isRedirecting = false;
+
 // Cache GET responses + handle 401
 apiClient.interceptors.response.use((response) => {
   const { method, url } = response.config;
@@ -27,12 +29,18 @@ apiClient.interceptors.response.use((response) => {
   return response;
 }, (error) => {
   if (error.response?.status === 401) {
-    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-      console.warn('[apiClient] 401 — redirecting to /login');
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !isRedirecting) {
+      isRedirecting = true;
+      console.warn('[apiClient] 401 — session invalid, redirecting to login');
+      
       Cookies.remove('seo_admin_token', { path: '/' });
       localStorage.removeItem('seo_user');
       localStorage.removeItem('seo_admin_token');
-      window.location.href = '/login';
+      
+      // Small delay to let other parallel requests finish/fail before redirecting
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
     }
   }
   return Promise.reject(error);

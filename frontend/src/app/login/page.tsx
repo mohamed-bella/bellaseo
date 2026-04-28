@@ -31,6 +31,9 @@ export default function LoginPage() {
       // Ensure the cookie is accessible even if the user is testing on HTTP (like http://77.42.43.52:3000)
       Cookies.set('seo_admin_token', data.session.access_token, { expires: 7, path: '/' });
       
+      // Also save to localStorage for maximum persistence and compatibility with apiClient retrieval
+      localStorage.setItem('seo_admin_token', data.session.access_token);
+      
       const userPayload = {
         id: data.user.id,
         username: data.user.email?.split('@')[0] || 'User',
