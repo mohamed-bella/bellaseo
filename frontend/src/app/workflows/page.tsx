@@ -24,21 +24,41 @@ function cn(...inputs: any[]) {
 export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
     try {
-      const [{ data: wData }, { data: lData }] = await Promise.all([
+      const [{ data: wData }, { data: lData }, { data: cData }] = await Promise.all([
         apiClient.get('/workflows'),
         apiClient.get('/logs?limit=50'),
+        apiClient.get('/campaigns'),
       ]);
       setWorkflows(wData);
       setLogs(lData);
+      setCampaigns(cData.filter((c: any) => c.status === 'active' && c.schedule_type !== 'manual'));
     } catch (err) {
       console.error('Failed to fetch automation data:', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const calculateNextRun = (cronTime: string, type: string) => {
+    const [hours, minutes] = cronTime.split(':').map(Number);
+    const now = new Date();
+    let next = new Date();
+    next.setHours(hours, minutes, 0, 0);
+
+    if (next <= now) {
+      if (type === 'daily') next.setDate(next.getDate() + 1);
+      else if (type === 'weekly') next.setDate(next.getDate() + 7);
+      else if (type === 'hourly') {
+        next = new Date();
+        next.setHours(next.getHours() + 1, minutes, 0, 0);
+      }
+    }
+    return next;
   };
 
   useEffect(() => {
@@ -83,6 +103,35 @@ export default function WorkflowsPage() {
           Go to My Projects <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Scheduled Runs Section */}
+      {campaigns.length > 0 && (
+        <div className="bg-[#1A1D23] rounded-3xl p-6 text-white border border-white/5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl -mr-16 -mt-16" />
+          <h3 className="font-bold text-sm uppercase tracking-widest text-primary mb-4 flex items-center gap-2 relative z-10">
+            <Clock className="w-4 h-4" /> Next Scheduled Runs
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+            {campaigns.map((c) => {
+              const nextRun = calculateNextRun(c.cron_time, c.schedule_type);
+              return (
+                <div key={c.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-white truncate max-w-[150px]">{c.name}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase mt-0.5">{c.schedule_type} @ {c.cron_time}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-primary uppercase">Starting In</p>
+                    <p className="text-sm font-black text-white">
+                      {Math.max(0, Math.floor((nextRun.getTime() - Date.now()) / (1000 * 60 * 60)))}h {Math.max(0, Math.floor(((nextRun.getTime() - Date.now()) / (1000 * 60)) % 60))}m
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Automation Runs */}

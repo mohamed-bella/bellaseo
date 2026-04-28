@@ -2,7 +2,7 @@ const supabase = require('../../config/database');
 
 const stats = async (req, res, next) => {
   try {
-    const [campaigns, keywords, articles, sites, workflows, recentLogs, waStatus] = await Promise.all([
+    const [campaigns, keywords, articles, sites, workflows, recentLogs, waStatus, apiKeys] = await Promise.all([
       supabase.from('campaigns').select('id', { count: 'exact', head: true }),
       supabase.from('keywords').select('id', { count: 'exact', head: true }),
       supabase.from('articles').select('id, status', { count: 'exact' }).limit(2000),
@@ -17,6 +17,7 @@ const stats = async (req, res, next) => {
         .order('created_at', { ascending: false })
         .limit(12),
       supabase.from('system_settings').select('value').eq('key', 'whatsapp_status').maybeSingle(),
+      supabase.from('system_settings').select('value').eq('key', 'api_keys').maybeSingle(),
     ]);
 
     // Log any query errors to server console so issues are visible
@@ -30,6 +31,9 @@ const stats = async (req, res, next) => {
     const publishedCount = (articles.data ?? []).filter(a => a.status === 'published').length;
     const reviewCount = (articles.data ?? []).filter(a => a.status === 'review').length;
 
+    const keys = apiKeys.data?.value || {};
+    const hasKeys = !!(keys.openai || keys.gemini);
+
     res.set('Cache-Control', 'private, max-age=15, stale-while-revalidate=30');
     res.json({
       totalCampaigns: campaigns.count ?? 0,
@@ -41,6 +45,7 @@ const stats = async (req, res, next) => {
       activeWorkflows: workflows.data ?? [],
       recentLogs: recentLogs.data ?? [],
       whatsappConnected: waStatus.data?.value?.connected ?? false,
+      apiKeysConfigured: hasKeys,
     });
   } catch (err) { next(err); }
 };

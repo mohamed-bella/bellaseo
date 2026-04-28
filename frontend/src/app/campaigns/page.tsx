@@ -21,6 +21,21 @@ const STATUS_LABELS: Record<string, string> = {
   archived: 'Archived',
 };
 
+const PROMPT_TEMPLATES = [
+  {
+    name: '🏆 SEO Pillar Post (Comprehensive)',
+    template: `# Ultimate Guide to {{keyword}}\n\n## Overview\n[Briefly introduce {{keyword}} and why it matters in 2024]\n\n## Core Concepts\n[Explain the fundamental principles of {{keyword}}]\n\n## Step-by-Step Implementation\n[Detailed guide on how to master {{keyword}}]\n\n## Common Pitfalls to Avoid\n[Expert advice on what to watch out for]\n\n## Conclusion\n[Final thoughts and next steps]`
+  },
+  {
+    name: '⚖️ Product Comparison (A vs B)',
+    template: `# {{keyword}}: Which One Wins?\n\n## Introduction\n[Set the stage for the comparison between the top contenders]\n\n## Feature Breakdown\n- **Ease of Use**: [Compare user experience]\n- **Pricing**: [Value for money analysis]\n- **Performance**: [Speed and reliability check]\n\n## Pros & Cons\n[Highlight the strengths and weaknesses of each]\n\n## Final Verdict\n[Recommend the best option for different user types]`
+  },
+  {
+    name: '🛠 Technical "How-To" Guide',
+    template: `# How to Successfully {{keyword}}\n\n## Prerequisites\n[What you need before you start]\n\n## Step 1: Preparation\n[Detailed setup instructions]\n\n## Step 2: Implementation\n[The core process of {{keyword}} with code/technical details]\n\n## Step 3: Verification\n[How to check if it worked]\n\n## Summary\n[Quick recap and troubleshooting tips]`
+  }
+];
+
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
@@ -609,7 +624,25 @@ export default function CampaignsPage() {
             <div>
               <label className="block text-[11px] font-black text-[#9CA3AF] uppercase mb-2 tracking-widest flex items-center justify-between">
                 <span>Prompt Configuration (Markdown Support OK)</span>
-                <span className="text-[#FF642D] normal-case font-bold italic">Tip: Use {"{{keyword}}"} to create a Master Template</span>
+                <div className="flex items-center gap-2">
+                  <select 
+                    id="template-selector"
+                    className="bg-[#1A1D23] border border-[#333] text-[10px] px-2 py-1 rounded text-gray-400 outline-none focus:border-[#FF642D] transition-colors"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setFormData({ ...formData, prompt_template: e.target.value });
+                        // Reset selector
+                        e.target.value = '';
+                      }
+                    }}
+                  >
+                    <option value="">Load Blueprint...</option>
+                    {PROMPT_TEMPLATES.map(t => (
+                      <option key={t.name} value={t.template}>{t.name}</option>
+                    ))}
+                  </select>
+                  <span className="text-[#FF642D] normal-case font-bold italic">Tip: Use {"{{keyword}}"}</span>
+                </div>
               </label>
               <textarea
                 value={formData.prompt_template}

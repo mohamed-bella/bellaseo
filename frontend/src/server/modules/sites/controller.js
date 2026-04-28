@@ -121,6 +121,86 @@ const testConnection = async (req, res, next) => {
 
 const wordpressService = require('../../services/wordpressService');
 
+const publishTestPost = async (req, res, next) => {
+  try {
+    const { data: site, error } = await supabase.from('sites').select('*').eq('id', req.params.id).single();
+    if (error) throw error;
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+
+    if (site.type !== 'wordpress') {
+      return res.status(400).json({ error: 'Test posting is only supported for WordPress sites' });
+    }
+
+    const creds = JSON.parse(site.credentials_json);
+    const token = Buffer.from(`${creds.username}:${creds.app_password}`).toString('base64');
+    const authHeader = {
+      Authorization: `Basic ${token}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (compatible; BellaSEO/2.0)',
+    };
+
+    const now = new Date();
+    const testPayload = {
+      title: `[TEST] Connection Probe — ${now.toUTCString()}`,
+      content: `<p>This is an automated connection test post created by <strong>BellaSEO</strong> on ${now.toUTCString()}.</p><p>If you can see this post, publishing is working correctly. Please delete it.</p>`,
+      slug: `bellaseo-test-${Date.now()}`,
+      status: 'private',
+      meta: {},
+    };
+
+    const postResp = await axios.post(
+      `${site.api_url}/wp-json/wp/v2/posts`,
+      testPayload,
+      { headers: authHeader, timeout: 20000 }
+    );
+
+    const wpId = postResp.data.id;
+    // Build a preview link that works even for private posts
+    const previewLink = postResp.data.link || `${site.api_url}/?p=${wpId}`;
+
+    return res.json({ success: true, wp_id: wpId, url: previewLink });
+  } catch (err) {
+    const body = err.response?.data;
+    let msg = body?.message || err.message;
+    if (body?.code === 'rest_cannot_create') {
+      msg = "Permission denied: your user role cannot create posts. Upgrade to Author/Editor/Administrator.";
+    } else if (err.response?.status === 401) {
+      msg = "Authentication failed: wrong username or Application Password.";
+    } else if (err.response?.status === 403) {
+      msg = "Forbidden: a security plugin (Wordfence, iThemes, etc.) is blocking the REST API.";
+    }
+    return res.status(400).json({ success: false, error: msg });
+  }
+};
+
+const deleteTestPost = async (req, res, next) => {
+  try {
+    const { data: site, error } = await supabase.from('sites').select('*').eq('id', req.params.id).single();
+    if (error) throw error;
+    if (!site) return res.status(404).json({ error: 'Site not found' });
+
+    const { wp_id } = req.body;
+    if (!wp_id) return res.status(400).json({ error: 'wp_id is required' });
+
+    const creds = JSON.parse(site.credentials_json);
+    const token = Buffer.from(`${creds.username}:${creds.app_password}`).toString('base64');
+    const authHeader = {
+      Authorization: `Basic ${token}`,
+      'User-Agent': 'Mozilla/5.0 (compatible; BellaSEO/2.0)',
+    };
+
+    // force=true skips trash and permanently deletes
+    await axios.delete(
+      `${site.api_url}/wp-json/wp/v2/posts/${wp_id}?force=true`,
+      { headers: authHeader, timeout: 10000 }
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.response?.data?.message || err.message });
+  }
+};
+
 const getPostTypes = async (req, res, next) => {
   try {
     const { data: site, error } = await supabase.from('sites').select('*').eq('id', req.params.id).single();
@@ -174,4 +254,4 @@ const getPosts = async (req, res, next) => {
   }
 };
 
-module.exports = { list, get, create, update, remove, testConnection, getPostTypes, getDiagnostics, getPosts };
+module.exports = { list, get, create, update, remove, testConnection, getPostTypes, getDiagnostics, getPosts, publishTestPost, deleteTestPost };

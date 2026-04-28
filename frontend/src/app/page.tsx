@@ -100,6 +100,36 @@ export default function DashboardPage() {
     );
   }
 
+  const steps = [
+    {
+      id: 'site',
+      title: 'Connect Your Website',
+      description: 'Add your WordPress or Blogger site to start auto-publishing.',
+      link: '/sites',
+      completed: stats.activeSites > 0,
+      icon: Globe
+    },
+    {
+      id: 'keys',
+      title: 'Configure AI Models',
+      description: 'Enter your OpenAI or Gemini keys to enable content generation.',
+      link: '/settings',
+      completed: (stats as any).apiKeysConfigured,
+      icon: Sparkles
+    },
+    {
+      id: 'project',
+      title: 'Create Your First Project',
+      description: 'Define your niche and topics to fuel the AI engine.',
+      link: '/campaigns',
+      completed: stats.totalCampaigns > 0,
+      icon: FolderKanban
+    }
+  ];
+
+  const completedStepsCount = steps.filter(s => s.completed).length;
+  const isFullySetup = completedStepsCount === steps.length && stats.publishedArticles > 0;
+
   return (
     <div className="w-full max-w-[1400px] mx-auto py-8 px-4 space-y-12">
       
@@ -128,6 +158,73 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* ── Setup Wizard (Only for new users) ── */}
+      {!isFullySetup && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#1A1D23] rounded-[32px] p-8 md:p-12 text-white overflow-hidden relative"
+        >
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF642D] opacity-10 blur-[100px] -mr-32 -mt-32" />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-start lg:items-center">
+            <div className="max-w-md space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF642D]" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Getting Started</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight leading-tight">
+                Complete your system setup to launch AI.
+              </h2>
+              <div className="flex items-center gap-4 pt-2">
+                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(completedStepsCount / steps.length) * 100}%` }}
+                    className="h-full bg-[#FF642D]"
+                  />
+                </div>
+                <span className="text-xs font-bold text-[#9CA3AF] uppercase tracking-widest">
+                  {completedStepsCount}/{steps.length} Steps
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
+              {steps.map((step, i) => (
+                <Link href={step.link} key={step.id} className="group">
+                  <div className={`h-full p-6 rounded-3xl border transition-all duration-500 flex flex-col ${
+                    step.completed 
+                      ? 'bg-emerald-500/10 border-emerald-500/20' 
+                      : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                  }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${
+                      step.completed ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white group-hover:bg-[#FF642D]'
+                    }`}>
+                      {step.completed ? <CheckCircle2 className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
+                    </div>
+                    <h3 className={`text-sm font-bold mb-1 tracking-tight ${step.completed ? 'text-emerald-400' : 'text-white'}`}>
+                      {step.title}
+                    </h3>
+                    <p className="text-[11px] text-[#9CA3AF] font-medium leading-relaxed">
+                      {step.description}
+                    </p>
+                    <div className="mt-auto pt-4 flex justify-end">
+                      {step.completed ? (
+                        <span className="text-[10px] font-black text-emerald-500 uppercase">Ready</span>
+                      ) : (
+                        <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── High Impact Stats ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 pt-4">

@@ -97,6 +97,23 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
   const iconName   = dynamicBranding?.iconName || BRANDING?.logo?.iconName || 'TrendingUp';
   const DynamicIcon = (LucideIcons as any)[iconName] || TrendingUp;
 
+  const [health, setHealth] = useState({ sites: 0, keys: false, loading: true });
+
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+    const checkHealth = async () => {
+      try {
+        const { data } = await apiClient.get('/dashboard/stats');
+        setHealth({ 
+          sites: data.activeSites || 0, 
+          keys: data.apiKeysConfigured || false, 
+          loading: false 
+        });
+      } catch { setHealth(h => ({ ...h, loading: false })); }
+    };
+    checkHealth();
+  }, [isSidebarOpen]);
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -209,6 +226,35 @@ export default function Sidebar({ dynamicBranding }: SidebarProps) {
               </div>
             </div>
           ))}
+
+          {/* ── System Status ──────────────────────────── */}
+          {isSidebarOpen && !health.loading && (
+            <div className="pt-4 mt-4 border-t border-[#F0F0F0] px-3 space-y-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#B0B7C3]">
+                Engine Status
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between group cursor-default">
+                  <div className="flex items-center gap-2">
+                    <div className={cn('w-1.5 h-1.5 rounded-full', health.keys ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500')} />
+                    <span className="text-[11px] font-bold text-[#4B5563]">AI Core</span>
+                  </div>
+                  <span className={cn('text-[9px] font-black uppercase px-1.5 py-0.5 rounded', health.keys ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50')}>
+                    {health.keys ? 'Active' : 'Offline'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between group cursor-default">
+                  <div className="flex items-center gap-2">
+                    <div className={cn('w-1.5 h-1.5 rounded-full', health.sites > 0 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500')} />
+                    <span className="text-[11px] font-bold text-[#4B5563]">Network</span>
+                  </div>
+                  <span className={cn('text-[9px] font-black uppercase px-1.5 py-0.5 rounded', health.sites > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50')}>
+                    {health.sites > 0 ? `${health.sites} Nodes` : 'No Site'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* ── User Footer ──────────────────────────────── */}

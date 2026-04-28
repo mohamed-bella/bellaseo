@@ -1,5 +1,10 @@
 {
   "name": "v2-seo-gen-root",
   "private": true,
-  "description": "Root package.json to fix Next.js Turbopack module resolution boundaries"
+  "description": "Root package.json to fix Next.js Turbopack module resolution boundaries",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend"
+  }
 }
