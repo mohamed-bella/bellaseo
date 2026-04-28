@@ -16,6 +16,7 @@ import { twMerge } from 'tailwind-merge';
 import { BRANDING } from '@/config/branding';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import apiClient from '@/services/apiClient';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

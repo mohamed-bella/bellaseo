@@ -317,7 +317,7 @@ export default function SitesPage() {
             {/* Post Publishing Test Panel */}
             {(() => {
               const pt = postTests[site.id];
-              if (!pt || pt.phase === 'idle') return null;
+              if (!pt || (pt.phase === 'idle' && !pt.error)) return null;
               return (
                 <div className="mt-4 rounded-2xl border border-border overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
                   <div className="px-3 py-2 bg-secondary/50 border-b border-border flex items-center gap-2">
@@ -401,7 +401,7 @@ export default function SitesPage() {
                     )}
 
                     {/* Error on idle */}
-                    {pt.phase === 'idle' && pt.error && (
+                    {(pt.phase as string) === 'idle' && pt.error && (
                       <div className="flex items-start gap-2 text-rose-400">
                         <XCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                         <p className="text-xs leading-snug">{pt.error}</p>

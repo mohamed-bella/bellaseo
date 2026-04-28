@@ -28,7 +28,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:p-6 overflow-y-auto pt-10 sm:pt-20">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className={cn('relative w-full max-h-[95vh] flex flex-col bg-white rounded-2xl border border-[#E5E8EB] shadow-2xl overflow-hidden', maxWidth)}>
         {title ? (

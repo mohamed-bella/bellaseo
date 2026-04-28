@@ -6,12 +6,14 @@ import {
   ChevronLeft, Plus, Eye, CheckCircle2, FileEdit, Settings,
   Zap, Loader2, Play, Trash2, Globe, XCircle, RotateCcw,
   FolderOpen, Tag, Clock, BarChart2, ExternalLink, Check,
-  X, RefreshCw, ChevronDown, ChevronUp, Layers
+  X, RefreshCw, ChevronDown, ChevronUp, Layers, LayoutGrid, Library,
+  MoreHorizontal, ChevronRight, Search
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import apiClient from '@/services/apiClient';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ArticleEditor = dynamic(() => import('@/components/articles/ArticleEditor'), { ssr: false });
 import { getSocket } from '@/services/websocketClient';
@@ -53,6 +55,9 @@ export default function ProjectHubPage() {
   const [clusters, setClusters]   = useState<any[]>([]);
   const [sites, setSites]         = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Redesign: Workspace View
+  const [view, setView] = useState<'topics' | 'library'>('topics');
 
   // topics pane
   const [newTopic, setNewTopic]           = useState('');
@@ -96,6 +101,8 @@ export default function ProjectHubPage() {
     article_style: 'informative', prompt_template: '', target_site_id: '',
     target_cpt: 'post', cron_time: '09:00', cron_timezone: 'Africa/Casablanca', posts_per_run: 1,
   });
+
+  const progress = keywords.length > 0 ? (articles.filter(a => a.status === 'published').length / keywords.length) * 100 : 0;
 
   // ── data ────────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -355,367 +362,349 @@ export default function ProjectHubPage() {
 
   // ── render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-5 pb-10">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4 sm:px-6">
 
-      {/* ── HEADER ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      {/* ── CLEAN HEADER ── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-4">
+        <div className="space-y-1">
           <button
             onClick={() => router.push('/campaigns')}
-            className="text-[11px] uppercase font-bold tracking-widest text-[#9CA3AF] hover:text-[#FF642D] transition-colors flex items-center gap-1 mb-2"
+            className="group flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-all mb-2"
           >
-            <ChevronLeft className="w-3 h-3" /> All Projects
+            <ChevronLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" /> 
+            Back to Projects
           </button>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-black text-[#1A1D23] tracking-tight">{campaign.name}</h1>
-            <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
-              campaign.status === 'active' ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-amber-600 bg-amber-50 border-amber-200'
-            }`}>{campaign.status}</span>
-            {targetSite && (
-              <span className="text-[10px] font-bold flex items-center gap-1 text-[#9CA3AF] bg-[#F3F4F6] border border-[#E5E8EB] px-2.5 py-1 rounded-full">
-                <Globe className="w-3 h-3" /> {targetSite.name}
-              </span>
-            )}
+          <h1 className="text-4xl font-black text-foreground tracking-tighter flex items-center gap-3">
+            {campaign.name}
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          </h1>
+          <div className="flex items-center gap-4 text-sm font-medium text-muted-foreground pt-1">
+             <span className="flex items-center gap-1.5"><Globe className="w-4 h-4" /> {targetSite?.name || 'Local Sync'}</span>
+             <span className="text-border">|</span>
+             <span className="flex items-center gap-1.5"><Tag className="w-4 h-4" /> {campaign.niche}</span>
           </div>
-          <p className="text-xs text-[#9CA3AF] mt-1.5">{campaign.niche} · {campaign.target_word_count} words · {campaign.article_style}</p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          {triggerMsg && (
-            <span className={`px-3 py-2 rounded-xl text-xs font-bold border ${
-              triggerMsg.isError ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-emerald-50 border-emerald-200 text-emerald-600'
-            }`}>{triggerMsg.msg}</span>
-          )}
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            className="flex items-center gap-2 border-[#E5E8EB] text-[#1A1D23] hover:border-[#FF642D] hover:text-[#FF642D] text-xs"
+            className="rounded-full px-6 border-border hover:border-primary/50 text-foreground text-xs font-bold"
             onClick={() => setIsSettingsOpen(true)}
           >
-            <Settings className="w-3.5 h-3.5" /> Config
+            <Settings className="w-4 h-4 mr-2" /> Project Settings
           </Button>
           <Button
-            className="flex items-center gap-2 text-xs bg-[#1A1D23] hover:bg-[#FF642D] transition-colors"
+            className="rounded-full px-6 bg-foreground text-background hover:bg-primary transition-all text-xs font-bold shadow-xl"
             onClick={() => handleOpenPreFlight(Array.from(selectedKeywordIds))}
             disabled={selectedKeywordIds.size === 0 || isGenerating}
             isLoading={isGenerating}
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-4 h-4 mr-2" /> 
             Generate ({selectedKeywordIds.size})
           </Button>
         </div>
       </div>
 
-      {/* ── STATS STRIP ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-        {[
-          { label: 'Topics', value: keywords.length, color: '#1A1D23' },
-          { label: 'Pending', value: keywords.filter(k => k.status === 'pending').length, color: '#9CA3AF' },
-          { label: 'Writing', value: keywords.filter(k => k.status === 'in_progress').length, color: '#FF642D' },
-          { label: 'Review', value: artCounts.Review, color: '#D97706' },
-          { label: 'Live', value: artCounts.Live, color: '#059669' },
-        ].map(s => (
-          <div key={s.label} className="bg-white border border-[#E5E8EB] rounded-xl p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">{s.label}</p>
-            <p className="text-2xl font-black mt-1" style={{ color: s.color }}>{s.value}</p>
+      {/* ── CAMPAIGN PULSE (Modern Stats) ── */}
+      <div className="bg-white rounded-[32px] p-8 border border-border shadow-sm overflow-hidden relative group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 rounded-full" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="flex-1 space-y-4">
+            <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-muted-foreground">
+              <span>Campaign Pulse</span>
+              <span className="text-foreground">{Math.round(progress)}% Complete</span>
+            </div>
+            <div className="h-3 w-full bg-secondary/30 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="h-full bg-primary shadow-[0_0_20px_rgba(255,100,45,0.4)]" 
+              />
+            </div>
           </div>
-        ))}
+
+          <div className="grid grid-cols-3 gap-8 md:pl-12 border-l border-border/0 md:border-l-border">
+            {[
+              { label: 'Topics', value: keywords.length, icon: Tag },
+              { label: 'Writing', value: keywords.filter(k => k.status === 'in_progress').length, icon: RefreshCw },
+              { label: 'Live', value: artCounts.Live, icon: CheckCircle2 },
+            ].map(s => (
+              <div key={s.label} className="text-center md:text-left">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">{s.label}</p>
+                <p className="text-2xl font-black text-foreground">{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* ── DUAL PANE ── */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+      {/* ── WORKSPACE SWITCHER ── */}
+      <div className="flex items-center justify-center pt-4">
+        <div className="bg-secondary/20 p-1.5 rounded-2xl border border-border flex items-center gap-1">
+          <button
+            onClick={() => setView('topics')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              view === 'topics' ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <LayoutGrid className="w-4 h-4" /> Topics
+          </button>
+          <button
+            onClick={() => setView('library')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              view === 'library' ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Library className="w-4 h-4" /> Library
+          </button>
+        </div>
+      </div>
 
-        {/* ── LEFT: TOPICS QUEUE ── */}
-        <div className="bg-white border border-[#E5E8EB] rounded-2xl overflow-hidden flex flex-col" style={{ height: 720 }}>
+      {/* ── MAIN WORKSPACE ── */}
+      <AnimatePresence mode="wait">
+        {view === 'topics' ? (
+          <motion.div
+            key="topics"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            {/* Topics Workspace Header */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[24px] border border-border shadow-sm">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                 <div className="relative flex-1 sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input 
+                      value={topicSearch}
+                      onChange={e => setTopicSearch(e.target.value)}
+                      placeholder="Search topics..."
+                      className="w-full bg-secondary/20 border-none rounded-xl pl-10 pr-4 py-2.5 text-xs font-medium focus:ring-2 focus:ring-primary/20 outline-none"
+                    />
+                 </div>
+                 <Button 
+                   onClick={() => setShowClusterForm(!showClusterForm)}
+                   variant="outline" 
+                   className="rounded-xl border-border px-4 py-2.5 text-xs font-bold"
+                 >
+                   <Layers className="w-4 h-4 mr-2" /> Cluster
+                 </Button>
+              </div>
 
-          {/* pane header */}
-          <div className="px-5 pt-5 pb-4 border-b border-[#E5E8EB] shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-black text-[#1A1D23] uppercase tracking-wider">Topics Queue</h2>
-                <span className="text-[10px] font-bold bg-[#F3F4F6] border border-[#E5E8EB] text-[#9CA3AF] px-2 py-0.5 rounded-full">{keywords.length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {pendingKeywords.length > 0 && (
-                  <button
-                    onClick={handleToggleSelectAll}
-                    className="text-[10px] font-bold text-[#9CA3AF] hover:text-[#FF642D] transition-colors uppercase tracking-widest"
-                  >
-                    {selectedKeywordIds.size === pendingKeywords.length ? 'Deselect All' : `Select All (${pendingKeywords.length})`}
-                  </button>
-                )}
-                <button
-                  onClick={() => setShowClusterForm(v => !v)}
-                  className="text-[10px] font-black uppercase tracking-widest text-[#9CA3AF] hover:text-[#FF642D] flex items-center gap-1 transition-colors"
-                >
-                  <Layers className="w-3 h-3" /> Cluster
-                </button>
-              </div>
+              <form onSubmit={handleQuickAddTopic} className="flex items-center gap-2 w-full sm:w-auto">
+                 <input 
+                    value={newTopic}
+                    onChange={e => setNewTopic(e.target.value)}
+                    placeholder="Fast add topic..."
+                    className="flex-1 sm:w-64 bg-secondary/10 border-border border rounded-xl px-4 py-2.5 text-xs font-medium focus:border-primary outline-none"
+                 />
+                 <Button type="submit" isLoading={isAddingTopic} className="rounded-xl px-4 py-2.5 bg-primary text-white">
+                   <Plus className="w-4 h-4" />
+                 </Button>
+              </form>
             </div>
 
-            {/* cluster create form */}
-            {showClusterForm && (
-              <form onSubmit={handleCreateCluster} className="flex gap-2 mb-3">
-                <input
-                  autoFocus
-                  value={newClusterName}
-                  onChange={e => setNewClusterName(e.target.value)}
-                  placeholder="New cluster name…"
-                  className="flex-1 text-xs border border-[#E5E8EB] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#FF642D] text-[#1A1D23] placeholder:text-[#9CA3AF]"
-                />
-                <Button type="submit" isLoading={isCreatingCluster} className="text-xs px-3 py-1.5 h-auto">Create</Button>
-                <button type="button" onClick={() => setShowClusterForm(false)} className="p-1.5 text-[#9CA3AF] hover:text-rose-500"><X className="w-3.5 h-3.5" /></button>
-              </form>
-            )}
-
-            {/* quick add */}
-            <form onSubmit={handleQuickAddTopic} className="flex gap-2">
-              <input
-                value={newTopic}
-                onChange={e => setNewTopic(e.target.value)}
-                placeholder="Add topic…"
-                className="flex-1 text-xs border border-[#E5E8EB] rounded-lg px-3 py-2 focus:outline-none focus:border-[#FF642D] text-[#1A1D23] placeholder:text-[#9CA3AF]"
-              />
-              {clusters.length > 0 && (
-                <select
-                  value={newTopicCluster}
-                  onChange={e => setNewTopicCluster(e.target.value)}
-                  className="text-xs border border-[#E5E8EB] rounded-lg px-2 py-2 focus:outline-none focus:border-[#FF642D] text-[#9CA3AF] bg-white"
-                >
-                  <option value="">No cluster</option>
-                  {clusters.map(cl => <option key={cl.id} value={cl.id}>{cl.name}</option>)}
-                </select>
+            {/* Topics List Area */}
+            <div className="bg-white rounded-[32px] border border-border shadow-sm overflow-hidden min-h-[400px]">
+              {showClusterForm && (
+                <div className="p-6 bg-secondary/5 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">New Cluster</span>
+                    <input 
+                      autoFocus
+                      value={newClusterName}
+                      onChange={e => setNewClusterName(e.target.value)}
+                      placeholder="Enter cluster name..."
+                      className="bg-white border border-border rounded-xl px-4 py-2 text-xs font-medium outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={() => setShowClusterForm(false)} variant="ghost" className="text-xs">Cancel</Button>
+                    <Button onClick={handleCreateCluster} isLoading={isCreatingCluster} className="bg-primary text-white text-xs px-6">Save Cluster</Button>
+                  </div>
+                </div>
               )}
-              <Button type="submit" isLoading={isAddingTopic} className="text-xs px-3 py-2 h-auto shrink-0">
-                <Plus className="w-3.5 h-3.5" />
-              </Button>
-            </form>
 
-            {/* search */}
-            {keywords.length > 5 && (
-              <input
-                value={topicSearch}
-                onChange={e => setTopicSearch(e.target.value)}
-                placeholder="Filter topics…"
-                className="mt-2 w-full text-xs border border-[#E5E8EB] rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#FF642D] text-[#1A1D23] placeholder:text-[#9CA3AF]"
-              />
-            )}
-          </div>
-
-          {/* keyword list */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {keywords.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-[#9CA3AF] gap-2">
-                <Tag className="w-8 h-8 opacity-30" />
-                <p className="text-sm font-bold">No topics yet</p>
-                <p className="text-xs">Add one above to start generating</p>
-              </div>
-            ) : (
-              <div>
-                {/* clustered groups */}
-                {clusters.map(cl => {
-                  const kws = groupedKeywords[cl.id] || [];
-                  if (!kws.length) return null;
-                  const color = clusterColorMap[cl.id];
-                  const collapsed = collapsedClusters.has(cl.id);
-                  return (
-                    <div key={cl.id} className="border-b border-[#F3F4F6]">
-                      <button
-                        onClick={() => toggleCluster(cl.id)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#F9FAFB] transition-colors group"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                          <span className="text-[11px] font-black uppercase tracking-wider text-[#1A1D23]">{cl.name}</span>
-                          <span className="text-[10px] text-[#9CA3AF] font-mono">{kws.length}</span>
-                        </div>
-                        {collapsed ? <ChevronDown className="w-3 h-3 text-[#9CA3AF]" /> : <ChevronUp className="w-3 h-3 text-[#9CA3AF]" />}
-                      </button>
-                      {!collapsed && (
-                        <div className="pb-1">
-                          {kws.map(k => <KeywordRow key={k.id} k={k} articles={articles} selectedKeywordIds={selectedKeywordIds} handleToggleSelect={handleToggleSelect} handleOpenPreFlight={handleOpenPreFlight} handleDeleteKeyword={handleDeleteKeyword} openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} />)}
-                        </div>
-                      )}
+              <div className="divide-y divide-border/50">
+                {keywords.length === 0 ? (
+                  <div className="py-24 text-center">
+                    <div className="w-16 h-16 bg-secondary/20 rounded-[20px] flex items-center justify-center mx-auto mb-4">
+                      <Tag className="w-8 h-8 text-muted-foreground" />
                     </div>
-                  );
-                })}
-
-                {/* unclustered */}
-                {(groupedKeywords['__none__'] || []).length > 0 && (
+                    <h3 className="font-black text-lg text-foreground">No topics yet</h3>
+                    <p className="text-sm text-muted-foreground">Start your campaign by adding some keywords above.</p>
+                  </div>
+                ) : (
                   <div>
-                    {clusters.length > 0 && (
-                      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#F3F4F6]">
-                        <span className="w-2 h-2 rounded-full bg-[#E5E8EB] shrink-0" />
-                        <span className="text-[11px] font-black uppercase tracking-wider text-[#9CA3AF]">Unclustered</span>
-                        <span className="text-[10px] text-[#9CA3AF] font-mono">{groupedKeywords['__none__'].length}</span>
+                    {/* Clustered groups */}
+                    {clusters.map(cl => {
+                      const kws = groupedKeywords[cl.id] || [];
+                      if (!kws.length) return null;
+                      const color = clusterColorMap[cl.id];
+                      const collapsed = collapsedClusters.has(cl.id);
+                      return (
+                        <div key={cl.id} className="group">
+                          <button
+                            onClick={() => toggleCluster(cl.id)}
+                            className="w-full flex items-center justify-between px-8 py-5 hover:bg-secondary/5 transition-colors"
+                          >
+                            <div className="flex items-center gap-4">
+                              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                              <span className="text-xs font-black uppercase tracking-[0.15em] text-foreground">{cl.name}</span>
+                              <span className="text-[10px] font-bold text-muted-foreground bg-secondary/30 px-2 py-0.5 rounded-full">{kws.length}</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${collapsed ? '' : 'rotate-90'}`} />
+                          </button>
+                          {!collapsed && (
+                            <div className="bg-secondary/[0.02] border-t border-border/30">
+                              {kws.map(k => (
+                                <KeywordRow 
+                                  key={k.id} k={k} articles={articles} 
+                                  selectedKeywordIds={selectedKeywordIds} 
+                                  handleToggleSelect={handleToggleSelect} 
+                                  handleOpenPreFlight={handleOpenPreFlight} 
+                                  handleDeleteKeyword={handleDeleteKeyword} 
+                                  openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} 
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Unclustered */}
+                    {(groupedKeywords['__none__'] || []).length > 0 && (
+                      <div className="group">
+                         <div className="px-8 py-5 flex items-center gap-4 border-b border-border/30">
+                            <span className="w-3 h-3 rounded-full bg-border" />
+                            <span className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground">Unclustered Pipeline</span>
+                            <span className="text-[10px] font-bold text-muted-foreground bg-secondary/30 px-2 py-0.5 rounded-full">{groupedKeywords['__none__'].length}</span>
+                         </div>
+                         <div className="">
+                            {(groupedKeywords['__none__'] || []).map(k => (
+                              <KeywordRow 
+                                key={k.id} k={k} articles={articles} 
+                                selectedKeywordIds={selectedKeywordIds} 
+                                handleToggleSelect={handleToggleSelect} 
+                                handleOpenPreFlight={handleOpenPreFlight} 
+                                handleDeleteKeyword={handleDeleteKeyword} 
+                                openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} 
+                              />
+                            ))}
+                         </div>
                       </div>
                     )}
-                    {(groupedKeywords['__none__'] || []).map(k => (
-                      <KeywordRow key={k.id} k={k} articles={articles} selectedKeywordIds={selectedKeywordIds} handleToggleSelect={handleToggleSelect} handleOpenPreFlight={handleOpenPreFlight} handleDeleteKeyword={handleDeleteKeyword} openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} />
-                    ))}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── RIGHT: CONTENT LIBRARY ── */}
-        <div className="bg-white border border-[#E5E8EB] rounded-2xl overflow-hidden flex flex-col" style={{ height: 720 }}>
-
-          {/* pane header */}
-          <div className="px-5 pt-5 pb-4 border-b border-[#E5E8EB] shrink-0">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-black text-[#1A1D23] uppercase tracking-wider">Content Library</h2>
-                <span className="text-[10px] font-bold bg-[#F3F4F6] border border-[#E5E8EB] text-[#9CA3AF] px-2 py-0.5 rounded-full">{articles.length}</span>
-              </div>
             </div>
-            {/* status tabs */}
-            <div className="flex flex-wrap gap-1">
+          </motion.div>
+        ) : (
+          <motion.div
+            key="library"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            {/* Library Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
               {ART_TABS.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setArtStatusFilter(tab)}
-                  className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${
+                  className={`flex-shrink-0 px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                     artStatusFilter === tab
-                      ? 'bg-[#1A1D23] text-white border-[#1A1D23]'
-                      : 'bg-[#F3F4F6] text-[#9CA3AF] border-transparent hover:border-[#E5E8EB] hover:text-[#1A1D23]'
+                      ? 'bg-foreground text-background border-foreground shadow-lg shadow-foreground/10'
+                      : 'bg-white text-muted-foreground border-border hover:border-primary/50'
                   }`}
                 >
-                  {tab} {artCounts[tab] > 0 && <span className="ml-1 opacity-70">{artCounts[tab]}</span>}
+                  {tab} <span className="ml-1.5 opacity-50">{artCounts[tab]}</span>
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* articles list */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+            {/* Articles Grid */}
             {filteredArticles.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-[#9CA3AF] gap-2">
-                <FileEdit className="w-8 h-8 opacity-30" />
-                <p className="text-sm font-bold">{artStatusFilter === 'All' ? 'No articles yet' : `No ${artStatusFilter.toLowerCase()} articles`}</p>
-                {artStatusFilter === 'All' && <p className="text-xs">Select topics and hit Generate</p>}
+              <div className="bg-white rounded-[32px] border border-border shadow-sm py-24 text-center">
+                 <div className="w-16 h-16 bg-secondary/20 rounded-[20px] flex items-center justify-center mx-auto mb-4">
+                    <FileEdit className="w-8 h-8 text-muted-foreground" />
+                 </div>
+                 <h3 className="font-black text-lg text-foreground">No content found</h3>
+                 <p className="text-sm text-muted-foreground">Try selecting a different filter or generate some content.</p>
               </div>
-            ) : filteredArticles.map(art => {
-              const kw = keywords.find(k => k.id === art.keyword_id);
-              const statusInfo = STATUS_ART[art.status] || STATUS_ART.draft;
-              const loading = actionLoading[art.id];
-              return (
-                <div key={art.id} className="border border-[#E5E8EB] rounded-xl overflow-hidden hover:border-[#FF642D]/40 hover:shadow-sm transition-all group">
-                  {/* card top */}
-                  <div
-                    className="p-4 cursor-pointer"
-                    onClick={() => { setSelectedArticle(art); setIsEditorOpen(true); }}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border shrink-0 ${statusInfo.cls}`}>
-                        {statusInfo.label}
-                      </span>
-                      {kw && (
-                        <span className="text-[10px] font-bold text-[#9CA3AF] bg-[#F3F4F6] px-2 py-0.5 rounded-full truncate max-w-[180px]">
-                          {kw.main_keyword}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-sm text-[#1A1D23] line-clamp-2 leading-snug group-hover:text-[#FF642D] transition-colors">
-                      {art.title || 'Untitled'}
-                    </h3>
-                    {art.meta_description && (
-                      <p className="text-[11px] text-[#9CA3AF] mt-1 line-clamp-1">{art.meta_description}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-2.5 text-[10px] text-[#9CA3AF] font-medium">
-                      {art.word_count > 0 && <span className="flex items-center gap-1"><BarChart2 className="w-3 h-3" />{art.word_count.toLocaleString()} words</span>}
-                      {art.word_count > 0 && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{readingTime(art.word_count)}</span>}
-                      <span>{new Date(art.created_at).toLocaleDateString('en-GB')}</span>
-                    </div>
-                  </div>
-
-                  {/* card actions */}
-                  <div className="px-4 pb-3 flex items-center gap-2 border-t border-[#F3F4F6] pt-2.5">
-                    {art.status === 'review' && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(art.id)}
-                          disabled={!!loading}
-                          className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-                        >
-                          {loading === 'approve' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                          Approve & Publish
-                        </button>
-                        <button
-                          onClick={() => handleReject(art.id)}
-                          disabled={!!loading}
-                          className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50"
-                        >
-                          {loading === 'reject' ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-                          Reject
-                        </button>
-                      </>
-                    )}
-
-                    {art.status === 'draft' && (
-                      <button
-                        onClick={() => handleSetStatus(art.id, 'review')}
-                        disabled={!!loading}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-colors disabled:opacity-50"
-                      >
-                        {loading === 'review' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eye className="w-3 h-3" />}
-                        Submit for Review
-                      </button>
-                    )}
-
-                    {art.status === 'rejected' && (
-                      <button
-                        onClick={() => handleSetStatus(art.id, 'review')}
-                        disabled={!!loading}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-[#F3F4F6] text-[#9CA3AF] border border-[#E5E8EB] hover:bg-[#E5E8EB] transition-colors disabled:opacity-50"
-                      >
-                        {loading === 'review' ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-                        Re-review
-                      </button>
-                    )}
-
-                    {art.status === 'approved' && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1.5 rounded-lg border border-blue-200">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Publishing…
-                      </span>
-                    )}
-
-                    {art.status === 'published' && art.published_url && (
-                      <a
-                        href={art.published_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                      >
-                        <ExternalLink className="w-3 h-3" /> View Live
-                      </a>
-                    )}
-
-                    <button
-                      onClick={() => { setSelectedArticle(art); setIsEditorOpen(true); }}
-                      className="ml-auto flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-[#F3F4F6] text-[#1A1D23] border border-[#E5E8EB] hover:bg-[#1A1D23] hover:text-white transition-colors"
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredArticles.map(art => {
+                  const kw = keywords.find(k => k.id === art.keyword_id);
+                  const statusInfo = STATUS_ART[art.status] || STATUS_ART.draft;
+                  const loading = actionLoading[art.id];
+                  return (
+                    <div 
+                      key={art.id} 
+                      className="group bg-white rounded-[32px] border border-border p-6 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all flex flex-col h-full"
                     >
-                      <FileEdit className="w-3 h-3" /> Open Editor
-                    </button>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${statusInfo.cls}`}>
+                          {statusInfo.label}
+                        </span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button onClick={() => { setSelectedArticle(art); setIsEditorOpen(true); }} className="p-2 hover:bg-secondary/20 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+                              <FileEdit className="w-4 h-4" />
+                           </button>
+                           {art.status === 'published' && art.published_url && (
+                             <a href={art.published_url} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-secondary/20 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+                               <ExternalLink className="w-4 h-4" />
+                             </a>
+                           )}
+                        </div>
+                      </div>
 
-                    {kw && (
-                      <button
-                        onClick={() => handleOpenPreFlight([kw.id])}
-                        className="flex items-center gap-1 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg bg-[#FFF5F0] text-[#FF642D] border border-[#FDDDD0] hover:bg-[#FDDDD0] transition-colors"
-                        title="Regenerate this article"
-                      >
-                        <RefreshCw className="w-3 h-3" /> Regen
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                      <h3 className="text-lg font-black text-foreground tracking-tight line-clamp-2 leading-tight mb-3 group-hover:text-primary transition-colors">
+                        {art.title || 'Draft Article'}
+                      </h3>
+                      
+                      {art.meta_description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-6">
+                          {art.meta_description}
+                        </p>
+                      )}
+
+                      <div className="mt-auto pt-6 border-t border-border/50 flex items-center justify-between">
+                         <div className="flex items-center gap-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            <span className="flex items-center gap-1"><BarChart2 className="w-3 h-3" /> {art.word_count || 0}</span>
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {readingTime(art.word_count)}</span>
+                         </div>
+                         
+                         {/* Quick Actions for Library Card */}
+                         <div className="flex items-center gap-1.5">
+                            {art.status === 'review' && (
+                              <button 
+                                onClick={() => handleApprove(art.id)}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+                                title="Approve & Publish"
+                              >
+                                {loading === 'approve' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => { setSelectedArticle(art); setIsEditorOpen(true); }}
+                              className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-secondary/30 rounded-xl hover:bg-secondary/50 transition-all"
+                            >
+                              Open
+                            </button>
+                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── PRE-FLIGHT MODAL ── */}
       <Modal isOpen={isPreFlightOpen} onClose={() => setIsPreFlightOpen(false)} title={isRegeneratingArticleId ? 'Regeneration Override' : 'AI Pre-Flight'} maxWidth="max-w-2xl w-full">
@@ -882,62 +871,76 @@ function KeywordRow({ k, articles, selectedKeywordIds, handleToggleSelect, handl
   const selected = selectedKeywordIds.has(k.id);
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors group border-b border-[#F3F4F6] last:border-0 ${selected ? 'bg-[#FFF5F0]' : ''}`}>
-      {/* checkbox */}
-      <div className="w-4 h-4 shrink-0">
+    <div className={`group flex items-center gap-6 px-8 py-4 hover:bg-white transition-all border-b border-border/30 last:border-0 ${selected ? 'bg-primary/[0.03]' : ''}`}>
+      {/* Selection Control */}
+      <div className="flex items-center justify-center w-6 h-6 shrink-0">
         {isPending ? (
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={() => handleToggleSelect(k.id)}
-            className="w-4 h-4 rounded border-[#E5E8EB] text-[#FF642D] focus:ring-[#FF642D] cursor-pointer"
-          />
+          <div className="relative flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={() => handleToggleSelect(k.id)}
+              className="peer w-5 h-5 rounded-lg border-2 border-border text-primary focus:ring-primary focus:ring-offset-0 transition-all cursor-pointer appearance-none checked:bg-primary checked:border-primary"
+            />
+            <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+          </div>
         ) : isWriting ? (
-          <Loader2 className="w-4 h-4 text-[#FF642D] animate-spin" />
-        ) : k.status === 'done' ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <div className="w-5 h-5 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Loader2 className="w-3 h-3 text-primary animate-spin" />
+          </div>
         ) : (
-          <XCircle className="w-4 h-4 text-rose-400" />
+          <div className={`w-5 h-5 rounded-lg flex items-center justify-center ${k.status === 'done' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
+            {k.status === 'done' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <XCircle className="w-3.5 h-3.5 text-rose-500" />}
+          </div>
         )}
       </div>
 
-      {/* keyword info */}
+      {/* Main Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-[#1A1D23] truncate">{k.main_keyword}</p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          {k.is_pillar && <span className="text-[9px] font-black uppercase tracking-widest text-[#FF642D]">Pillar</span>}
-          <span className="text-[9px] font-bold text-[#9CA3AF] capitalize">{k.intent}</span>
-          <span className="text-[9px] font-bold text-[#9CA3AF] capitalize">{k.difficulty}</span>
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">{k.main_keyword}</p>
+          {k.is_pillar && (
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] bg-primary/10 text-primary px-2 py-0.5 rounded-md">Pillar</span>
+          )}
+        </div>
+        <div className="flex items-center gap-4 mt-1">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <span className="opacity-50">{k.intent}</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <span className="opacity-50">{k.difficulty}</span>
+          </div>
           {art && (
-            <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${STATUS_ART[art.status]?.cls || ''}`}>
+            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${STATUS_ART[art.status]?.cls || ''}`}>
               {STATUS_ART[art.status]?.label || art.status}
-            </span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* actions */}
-      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Quick Actions (Hover Only) */}
+      <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
         {art ? (
           <button
             onClick={() => openEditor(art)}
-            className="text-[9px] font-black uppercase px-2 py-1 rounded-lg bg-[#F3F4F6] text-[#1A1D23] hover:bg-[#1A1D23] hover:text-white transition-colors border border-[#E5E8EB]"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-secondary/50 text-foreground hover:bg-foreground hover:text-background transition-all border border-border/50"
           >
-            <Eye className="w-3 h-3" />
+            <FileEdit className="w-3.5 h-3.5" /> Edit
           </button>
         ) : isPending ? (
           <button
             onClick={() => handleOpenPreFlight([k.id])}
-            className="text-[9px] font-black uppercase px-2 py-1 rounded-lg bg-[#FFF5F0] text-[#FF642D] hover:bg-[#FF642D] hover:text-white transition-colors border border-[#FDDDD0]"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all border border-primary/20"
           >
-            <Play className="w-3 h-3" />
+            <Play className="w-3.5 h-3.5" /> Write
           </button>
         ) : null}
+        
         <button
           onClick={() => handleDeleteKeyword(k.id)}
-          className="p-1.5 rounded-lg text-[#9CA3AF] hover:text-rose-500 hover:bg-rose-50 transition-colors"
+          className="p-2 rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-50 transition-all"
+          title="Delete Topic"
         >
-          <Trash2 className="w-3 h-3" />
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>
