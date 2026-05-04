@@ -9,7 +9,12 @@
       "Bash(node *)",
       "Bash(curl -s http://localhost:3000/api/dashboard/stats -H \"Authorization: Bearer test\")",
       "Bash(curl *)",
-      "Bash(xargs ls *)"
+      "Bash(xargs ls *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Windows\\\\Desktop\\\\PROJECTS\\\\v2_SEO_GEN\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(xargs wc *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

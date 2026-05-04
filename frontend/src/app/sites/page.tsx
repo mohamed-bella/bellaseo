@@ -1,24 +1,96 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { 
-  Globe, Plus, Trash2, ShieldCheck, ShieldAlert, 
-  ExternalLink, Settings2, Activity, Box, Layout, 
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import {
+  Globe, Plus, Trash2, ShieldCheck, ShieldAlert,
+  ExternalLink, Settings2, Activity, Box, Layout,
   Info, Loader2, Search, CheckCircle2, XCircle, TrendingUp, HelpCircle,
-  Wifi, WifiOff, Zap, FileText, Send, FlameIcon as Flame
+  Wifi, WifiOff, Zap, FileText, Send, FlameIcon as Flame, Link2,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import apiClient from '@/services/apiClient';
 
 type PostTestPhase = 'idle' | 'publishing' | 'live' | 'deleting' | 'deleted';
-type PostTestState = { phase: PostTestPhase; wp_id?: number; url?: string; error?: string };
+type PostTestState = { phase: PostTestPhase; wp_id?: number; blogger_id?: string; url?: string; error?: string };
+type BloggerTestResult = { success: boolean; blog_name?: string; blog_url?: string; posts_total?: number; description?: string; message?: string };
 
-export default function SitesPage() {
+function SitesPageInner() {
+  const searchParams = useSearchParams();
   const [sites, setSites] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // OAuth result toast
+  const [oauthToast, setOauthToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Blog picker (after OAuth)
+  const [blogPickerOpen, setBlogPickerOpen] = useState(false);
+  const [oauthPayload, setOauthPayload]     = useState<{ access_token: string; refresh_token: string | null; blogs: any[] } | null>(null);
+  const [pickedBlog, setPickedBlog]         = useState<any>(null);
+  const [blogNickname, setBlogNickname]     = useState('');
+  const [isSavingBlog, setIsSavingBlog]     = useState(false);
+
+  useEffect(() => {
+    const status = searchParams.get('blogger_oauth');
+    if (!status) return;
+    window.history.replaceState({}, '', '/sites');
+
+    if (status === 'pick') {
+      try {
+        const raw = searchParams.get('data') || '';
+        const decoded = JSON.parse(Buffer.from(raw, 'base64').toString('utf8'));
+        setOauthPayload(decoded);
+        if (decoded.blogs?.length === 1) {
+          setPickedBlog(decoded.blogs[0]);
+          setBlogNickname(decoded.blogs[0].name);
+        }
+        setBlogPickerOpen(true);
+      } catch {
+        setOauthToast({ type: 'error', message: 'Failed to parse blog data from Google.' });
+      }
+    } else if (status === 'success') {
+      setOauthToast({ type: 'success', message: 'Blogger site connected successfully!' });
+      fetchSites();
+    } else {
+      const reason = searchParams.get('reason') || 'Unknown error';
+      setOauthToast({ type: 'error', message: `OAuth failed: ${reason}` });
+    }
+
+    const timer = setTimeout(() => setOauthToast(null), 7000);
+    return () => clearTimeout(timer);
+  }, [searchParams]);
+
+  const saveBloggerSite = async () => {
+    if (!oauthPayload || !pickedBlog) return;
+    setIsSavingBlog(true);
+    try {
+      await apiClient.post('/sites', {
+        name: blogNickname || pickedBlog.name,
+        type: 'blogger',
+        api_url: pickedBlog.url,
+        credentials: {
+          blog_id:       pickedBlog.id,
+          access_token:  oauthPayload.access_token,
+          refresh_token: oauthPayload.refresh_token || '',
+          client_id:     '',
+          client_secret: '',
+        },
+      });
+      setBlogPickerOpen(false);
+      setOauthPayload(null);
+      setPickedBlog(null);
+      setBlogNickname('');
+      setOauthToast({ type: 'success', message: `"${blogNickname || pickedBlog.name}" connected to Blogger!` });
+      fetchSites();
+    } catch (err: any) {
+      setOauthToast({ type: 'error', message: err.response?.data?.error || 'Failed to save site.' });
+    } finally {
+      setIsSavingBlog(false);
+    }
+  };
   
   // Diagnostics State
   const [isDiagOpen, setIsDiagOpen] = useState(false);
@@ -47,6 +119,9 @@ export default function SitesPage() {
       app_password: '',
       blog_id: '',
       access_token: '',
+      refresh_token: '',
+      client_id: '',
+      client_secret: '',
     }
   });
 
@@ -96,10 +171,13 @@ export default function SitesPage() {
         gsc_service_account: data.gsc_service_account || '',
         ga4_property_id: data.ga4_property_id || '',
         credentials: {
-          username: data.credentials?.username || '',
-          app_password: data.credentials?.app_password || '',
-          blog_id: data.credentials?.blog_id || '',
-          access_token: data.credentials?.access_token || '',
+          username:      data.credentials?.username      || '',
+          app_password:  data.credentials?.app_password  || '',
+          blog_id:       data.credentials?.blog_id       || '',
+          access_token:  data.credentials?.access_token  || '',
+          refresh_token: data.credentials?.refresh_token || '',
+          client_id:     data.credentials?.client_id     || '',
+          client_secret: data.credentials?.client_secret || '',
         }
       });
       setIsModalOpen(true);
@@ -113,10 +191,10 @@ export default function SitesPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingSite(null);
-    setFormData({ 
-       name: '', type: 'wordpress', api_url: '', 
-       gsc_service_account: '', ga4_property_id: '',
-       credentials: { username: '', app_password: '', blog_id: '', access_token: '' } 
+    setFormData({
+      name: '', type: 'wordpress', api_url: '',
+      gsc_service_account: '', ga4_property_id: '',
+      credentials: { username: '', app_password: '', blog_id: '', access_token: '', refresh_token: '', client_id: '', client_secret: '' }
     });
   };
 
@@ -131,6 +209,9 @@ export default function SitesPage() {
       } else {
         if (formData.credentials.blog_id) creds.blog_id = formData.credentials.blog_id;
         if (formData.credentials.access_token) creds.access_token = formData.credentials.access_token;
+        if (formData.credentials.refresh_token) creds.refresh_token = formData.credentials.refresh_token;
+        if (formData.credentials.client_id) creds.client_id = formData.credentials.client_id;
+        if (formData.credentials.client_secret) creds.client_secret = formData.credentials.client_secret;
       }
       
       const payload: any = { 
@@ -173,15 +254,13 @@ export default function SitesPage() {
     try {
       const { data } = await apiClient.post(`/sites/${id}/test`);
       if (data.success) {
-        setTestResults(prev => ({
-          ...prev,
-          [id]: { success: true, message: `Connected as ${data.user}${data.role ? ` · ${data.role}` : ''}` }
-        }));
+        // Blogger returns blog_name/blog_url; WordPress returns user/role
+        const msg = data.blog_name
+          ? `Blog: ${data.blog_name} · ${data.posts_total ?? 0} posts · ${data.blog_url}`
+          : `Connected as ${data.user}${data.role ? ` · ${data.role}` : ''}`;
+        setTestResults(prev => ({ ...prev, [id]: { success: true, message: msg } }));
       } else {
-        setTestResults(prev => ({
-          ...prev,
-          [id]: { success: false, message: data.error || 'Connection failed' }
-        }));
+        setTestResults(prev => ({ ...prev, [id]: { success: false, message: data.error || 'Connection failed' } }));
       }
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Unable to reach the site.';
@@ -196,7 +275,7 @@ export default function SitesPage() {
     try {
       const { data } = await apiClient.post(`/sites/${siteId}/test-post`);
       if (data.success) {
-        setPostTest(siteId, { phase: 'live', wp_id: data.wp_id, url: data.url });
+        setPostTest(siteId, { phase: 'live', wp_id: data.wp_id, blogger_id: data.blogger_id, url: data.url });
       } else {
         setPostTest(siteId, { phase: 'idle', error: data.error || 'Failed to publish test post.' });
       }
@@ -206,12 +285,12 @@ export default function SitesPage() {
     }
   };
 
-  const deleteTestPost = async (siteId: string, wpId: number) => {
+  const deleteTestPost = async (siteId: string, wpId?: number, bloggerId?: string) => {
     setPostTest(siteId, { phase: 'deleting' });
     try {
-      await apiClient.delete(`/sites/${siteId}/test-post`, { data: { wp_id: wpId } });
+      const payload = bloggerId ? { blogger_id: bloggerId } : { wp_id: wpId };
+      await apiClient.delete(`/sites/${siteId}/test-post`, { data: payload });
       setPostTest(siteId, { phase: 'deleted' });
-      // Auto-reset after 3 seconds
       setTimeout(() => setPostTests(prev => { const n = {...prev}; delete n[siteId]; return n; }), 3000);
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Delete failed.';
@@ -221,6 +300,24 @@ export default function SitesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
+
+      {/* OAuth result toast */}
+      {oauthToast && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium animate-in slide-in-from-top-2 duration-300 ${
+          oauthToast.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600'
+            : 'bg-rose-500/10 border-rose-500/25 text-rose-500'
+        }`}>
+          {oauthToast.type === 'success'
+            ? <CheckCircle2 className="w-4 h-4 shrink-0" />
+            : <XCircle className="w-4 h-4 shrink-0" />}
+          <span className="flex-1">{oauthToast.message}</span>
+          <button onClick={() => setOauthToast(null)} className="opacity-50 hover:opacity-100 transition-opacity">
+            <XCircle className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/50">
@@ -228,10 +325,23 @@ export default function SitesPage() {
           </h1>
           <p className="text-muted-foreground mt-2 text-base sm:text-lg">Manage your WordPress and Blogger publishing destinations.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center">
-          <Plus className="w-4 h-4" />
-          Add Site
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <a href="/auth/google/start" className="flex-1 sm:flex-none">
+            <Button className="w-full flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/30 border-0">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff" opacity=".9"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#fff" opacity=".9"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" opacity=".9"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" opacity=".9"/>
+              </svg>
+              Connect Blogger
+            </Button>
+          </a>
+          <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 shadow-lg shadow-primary/20 flex-1 sm:flex-none justify-center">
+            <Plus className="w-4 h-4" />
+            Add WordPress
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -351,8 +461,10 @@ export default function SitesPage() {
                         <div className="flex items-start gap-2.5">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-emerald-500">Post published! (Private Draft)</p>
-                            <p className="text-[10px] text-muted-foreground mt-0.5">WP ID: #{pt.wp_id}</p>
+                            <p className="text-xs font-bold text-emerald-500">Test post published! (Draft)</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {pt.blogger_id ? `Blogger ID: ${pt.blogger_id}` : `WP ID: #${pt.wp_id}`}
+                            </p>
                           </div>
                         </div>
                         <a
@@ -369,7 +481,7 @@ export default function SitesPage() {
                           <p className="text-[10px] text-rose-400 px-1">{pt.error}</p>
                         )}
                         <button
-                          onClick={() => deleteTestPost(site.id, pt.wp_id!)}
+                          onClick={() => deleteTestPost(site.id, pt.wp_id, pt.blogger_id)}
                           className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold hover:bg-rose-500/20 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -384,7 +496,9 @@ export default function SitesPage() {
                         <Loader2 className="w-4 h-4 animate-spin text-rose-400 shrink-0" />
                         <div>
                           <p className="font-bold text-foreground">Deleting test post...</p>
-                          <p className="opacity-60 mt-0.5">Permanently removing post #{pt.wp_id} from WordPress.</p>
+                          <p className="opacity-60 mt-0.5">
+                            {pt.blogger_id ? `Removing post ${pt.blogger_id} from Blogger.` : `Permanently removing post #${pt.wp_id} from WordPress.`}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -412,6 +526,24 @@ export default function SitesPage() {
                 </div>
               );
             })()}
+
+            {/* Blogger: Connect Google Account button */}
+            {site.type === 'blogger' && (
+              <div className="mt-4">
+                <a href={`/auth/google/start?site_id=${site.id}`}>
+                  <Button
+                    variant="outline"
+                    className="w-full text-xs flex items-center justify-center gap-2 border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    Connect Google Account (OAuth)
+                  </Button>
+                </a>
+                <p className="text-[9px] text-muted-foreground mt-1.5 text-center">
+                  Saves access + refresh token automatically. Requires client_id &amp; client_secret saved first.
+                </p>
+              </div>
+            )}
 
             <div className="mt-4 pt-5 grid grid-cols-4 gap-2 border-t border-border">
                 {/* Test Auth */}
@@ -653,7 +785,7 @@ export default function SitesPage() {
               value={formData.api_url}
               onChange={e => setFormData({...formData, api_url: e.target.value})}
               className="w-full bg-secondary border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono text-sm"
-              placeholder={formData.type === 'wordpress' ? 'https://yourblog.com' : 'https://www.googleapis.com/blogger/v3'}
+              placeholder={formData.type === 'wordpress' ? 'https://yourblog.com' : 'https://myblog.blogspot.com'}
             />
           </div>
 
@@ -706,23 +838,68 @@ export default function SitesPage() {
                 </>
              ) : (
                 <>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Blog ID</label>
-                    <input 
-                      required
-                      value={formData.credentials.blog_id}
-                      onChange={e => setFormData({...formData, credentials: {...formData.credentials, blog_id: e.target.value}})}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm"
-                    />
+                  <div className="p-3 bg-white/50 border border-primary/10 rounded-xl space-y-1">
+                    <p className="text-[11px] font-bold text-foreground flex items-center gap-2">
+                      <HelpCircle className="w-3.5 h-3.5 text-primary" />
+                      How to get Blogger credentials?
+                    </p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Go to <strong>Google Cloud Console</strong> → APIs &amp; Services → Credentials → Create OAuth 2.0 Client ID. Enable the Blogger API. Use the Blog ID from your Blogger dashboard URL (e.g. <code>1234567890</code>).
+                      <span className="block mt-1 text-primary italic font-medium">Tip: Add a refresh_token + client_id + client_secret for auto-renewal so tokens never expire.</span>
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Blog ID <span className="text-rose-400">*</span></label>
+                      <input
+                        required
+                        value={formData.credentials.blog_id}
+                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, blog_id: e.target.value}})}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
+                        placeholder="1234567890"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Client ID (optional)</label>
+                      <input
+                        value={formData.credentials.client_id}
+                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, client_id: e.target.value}})}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
+                        placeholder="*.apps.googleusercontent.com"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">OAuth Access Token</label>
-                    <textarea 
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">OAuth Access Token <span className="text-rose-400">*</span></label>
+                    <textarea
                       required
                       value={formData.credentials.access_token}
                       onChange={e => setFormData({...formData, credentials: {...formData.credentials, access_token: e.target.value}})}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm h-20"
+                      className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm h-16 font-mono"
+                      placeholder="ya29...."
                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Refresh Token (optional)</label>
+                      <input
+                        type={editingSite ? "text" : "password"}
+                        value={formData.credentials.refresh_token}
+                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, refresh_token: e.target.value}})}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
+                        placeholder="1//0g..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Client Secret (optional)</label>
+                      <input
+                        type={editingSite ? "text" : "password"}
+                        value={formData.credentials.client_secret}
+                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, client_secret: e.target.value}})}
+                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
+                        placeholder="GOCSPX-..."
+                      />
+                    </div>
                   </div>
                 </>
              )}
@@ -763,6 +940,96 @@ export default function SitesPage() {
           </div>
         </form>
       </Modal>
+
+      {/* ── Blog Picker Modal (after Google OAuth) ──────────────────────────── */}
+      <Modal
+        isOpen={blogPickerOpen}
+        onClose={() => setBlogPickerOpen(false)}
+        title="Choose Your Blogger Blog"
+      >
+        <div className="space-y-5">
+          <p className="text-sm text-muted-foreground">
+            Google sign-in successful. Pick the blog to connect, give it a nickname, and save.
+          </p>
+
+          {/* Blog list */}
+          <div className="space-y-2">
+            {(oauthPayload?.blogs || []).map((blog: any) => (
+              <button
+                key={blog.id}
+                type="button"
+                onClick={() => { setPickedBlog(blog); setBlogNickname(blog.name); }}
+                className={`w-full text-left px-4 py-3 rounded-2xl border transition-all ${
+                  pickedBlog?.id === blog.id
+                    ? 'border-orange-500/50 bg-orange-500/8 shadow-sm'
+                    : 'border-border hover:border-orange-500/30 hover:bg-orange-500/5'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-foreground truncate">{blog.name}</p>
+                    <p className="text-xs text-muted-foreground truncate font-mono mt-0.5">{blog.url}</p>
+                    {blog.description && (
+                      <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1 opacity-70">{blog.description}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold text-muted-foreground">{blog.posts} posts</p>
+                    {pickedBlog?.id === blog.id && (
+                      <CheckCircle2 className="w-4 h-4 text-orange-500 mt-1 ml-auto" />
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))}
+
+            {!oauthPayload?.blogs?.length && (
+              <div className="py-8 text-center text-muted-foreground">
+                <p className="font-bold">No Blogger blogs found on this Google account.</p>
+                <p className="text-sm mt-1">Create a blog at blogger.com first, then reconnect.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Nickname input */}
+          {pickedBlog && (
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
+                Site Nickname
+              </label>
+              <input
+                value={blogNickname}
+                onChange={e => setBlogNickname(e.target.value)}
+                className="w-full bg-secondary border border-border rounded-xl px-4 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500"
+                placeholder="e.g. Travel Blog"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Blog ID: <code className="font-mono">{pickedBlog.id}</code> — tokens saved automatically.
+              </p>
+            </div>
+          )}
+
+          <div className="pt-2 flex justify-end gap-3">
+            <Button variant="ghost" onClick={() => setBlogPickerOpen(false)}>Cancel</Button>
+            <Button
+              onClick={saveBloggerSite}
+              isLoading={isSavingBlog}
+              disabled={!pickedBlog}
+              className="bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg shadow-orange-500/25"
+            >
+              Connect This Blog
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
+  );
+}
+
+export default function SitesPage() {
+  return (
+    <Suspense fallback={null}>
+      <SitesPageInner />
+    </Suspense>
   );
 }

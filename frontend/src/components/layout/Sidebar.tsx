@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BarChart3, FolderKanban, Hash, FileText,
   FlaskConical, Workflow, Globe, PenSquare, Radar, Settings,
   ChevronLeft, ChevronRight, TrendingUp, LogOut, User, Bell,
-  SearchCode, ShieldCheck, Network, Users, BookOpen,
+  SearchCode, ShieldCheck, Network, Users, BookOpen, Rss,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useAppStore } from '@/state/store';
@@ -48,6 +48,7 @@ const navGroups = [
     label: 'Platform',
     items: [
       { name: 'Integrations',   icon: Globe,      href: '/sites',         color: '#6366F1' },
+      { name: 'Blogger',        icon: Rss,        href: '/blogger',       color: '#F97316' },
       { name: 'Article Studio', icon: PenSquare,  href: '/article-config',color: '#84CC16' },
       { name: 'Lead Radar',     icon: Radar,      href: '/radar',         color: '#EF4444' },
       { name: 'Topical Map',    icon: Network,    href: '/map',           color: '#0EA5E9' },

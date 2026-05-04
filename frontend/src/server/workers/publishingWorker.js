@@ -81,30 +81,43 @@ async function run(workflowId, campaignId, io) {
         }
 
         if (targetSite.type === SITE_TYPE.WORDPRESS) {
-            publishResult = await wordpressService.publishToWordPress(targetSite, articleToPublish, { 
+            publishResult = await wordpressService.publishToWordPress(targetSite, articleToPublish, {
               status: 'publish',
               post_type: campaign.target_cpt || 'post',
               featured_image_url: article.featured_image_url,
               rank_math_focus_keyword: rankMathKeyword
             });
         } else if (targetSite.type === SITE_TYPE.BLOGGER) {
-            publishResult = await bloggerService.publishToBlogger(targetSite, articleToPublish, { isDraft: false });
+            // Build labels: main keyword + secondary keywords as tags
+            const bloggerLabels = [];
+            if (article.keywords?.main_keyword) bloggerLabels.push(article.keywords.main_keyword);
+            if (Array.isArray(article.keywords?.secondary_keywords)) {
+              bloggerLabels.push(...article.keywords.secondary_keywords.slice(0, 5));
+            }
+            publishResult = await bloggerService.publishToBlogger(targetSite, articleToPublish, {
+              isDraft:        false,
+              labels:         bloggerLabels,
+              focusKeyword:   rankMathKeyword || article.keywords?.main_keyword || '',
+            });
         } else {
             throw new Error(`Unsupported site type: ${targetSite.type}`);
         }
 
-        // Persist publish result — including WP media ID if a featured image was uploaded
+        // Persist publish result
         const articleUpdate = {
-          status: ARTICLE_STATUS.PUBLISHED,
+          status:       ARTICLE_STATUS.PUBLISHED,
           published_url: publishResult.url,
           published_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          updated_at:   new Date().toISOString(),
         };
         if (publishResult.featured_media_id) {
           articleUpdate.wp_featured_media_id = publishResult.featured_media_id;
           if (publishResult.featured_image_wp_url) {
             articleUpdate.featured_image_url = publishResult.featured_image_wp_url;
           }
+        }
+        if (publishResult.blogger_id) {
+          articleUpdate.blogger_post_id = publishResult.blogger_id;
         }
 
         const { data: updatedArticle, error: uErr } = await supabase.from('articles')

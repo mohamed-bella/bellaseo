@@ -27,6 +27,7 @@ const settingsRoutes = require('./modules/settings/router');
 const clusterRoutes = require('./modules/clusters/router');
 const radarRoutes = require('./modules/radar/router');
 const authRoutes = require('./modules/auth/router');
+const googleOAuthRoutes = require('./modules/auth/googleOAuth');
 const dashboardRoutes = require('./modules/dashboard/router');
 const { requireAuth } = require('./middleware/auth');
 const { initScheduler } = require('./services/schedulerService');
@@ -94,6 +95,9 @@ nextApp.prepare().then(() => {
 
   // Public Auth
   app.use('/api/auth', authRoutes);
+
+  // Google OAuth for Blogger (no /api prefix — redirect_uri must match exactly)
+  app.use('/auth/google', googleOAuthRoutes);
 
   // Dashboard stats (single fast endpoint)
   app.use('/api/dashboard', requireAuth, dashboardRoutes);

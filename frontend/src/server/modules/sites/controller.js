@@ -1,5 +1,7 @@
 const supabase = require('../../config/database');
 const axios = require('axios');
+const bloggerService = require('../../services/bloggerService');
+const wordpressService = require('../../services/wordpressService');
 
 const list = async (req, res, next) => {
   try {
@@ -86,6 +88,18 @@ const testConnection = async (req, res, next) => {
     if (error) throw error;
 
     const creds = JSON.parse(site.credentials_json);
+
+    if (site.type === 'blogger') {
+      const info = await bloggerService.getBlogInfo(site);
+      return res.json({
+        success:     true,
+        blog_name:   info.name,
+        blog_url:    info.url,
+        posts_total: info.posts_total,
+        description: info.description,
+      });
+    }
+
     if (site.type === 'wordpress') {
       const token = Buffer.from(`${creds.username}:${creds.app_password}`).toString('base64');
       const authHeader = { Authorization: `Basic ${token}` };
@@ -105,21 +119,21 @@ const testConnection = async (req, res, next) => {
         });
       } catch (permErr) {
         if (permErr.response?.status === 401 || permErr.response?.status === 403) {
-          return res.json({ 
-            success: false, 
-            error: `Authenticated as ${resp.data.name}, but lacks post creation permissions. Root cause: User role is likely 'Subscriber'. Upgrade to 'Author' or higher.` 
+          return res.json({
+            success: false,
+            error: `Authenticated as ${resp.data.name}, but lacks post creation permissions. Root cause: User role is likely 'Subscriber'. Upgrade to 'Author' or higher.`
           });
         }
       }
 
       return res.json({ success: true, user: resp.data.name, role: resp.data.roles?.join(', ') });
     }
+
+    return res.status(400).json({ success: false, error: `Unsupported site type: ${site.type}` });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 };
-
-const wordpressService = require('../../services/wordpressService');
 
 const publishTestPost = async (req, res, next) => {
   try {
@@ -127,8 +141,13 @@ const publishTestPost = async (req, res, next) => {
     if (error) throw error;
     if (!site) return res.status(404).json({ error: 'Site not found' });
 
+    if (site.type === 'blogger') {
+      const result = await bloggerService.publishTestPost(site);
+      return res.json({ success: true, blogger_id: result.blogger_id, url: result.url });
+    }
+
     if (site.type !== 'wordpress') {
-      return res.status(400).json({ error: 'Test posting is only supported for WordPress sites' });
+      return res.status(400).json({ error: `Test posting not supported for site type: ${site.type}` });
     }
 
     const creds = JSON.parse(site.credentials_json);
@@ -179,7 +198,14 @@ const deleteTestPost = async (req, res, next) => {
     if (error) throw error;
     if (!site) return res.status(404).json({ error: 'Site not found' });
 
-    const { wp_id } = req.body;
+    const { wp_id, blogger_id } = req.body;
+
+    if (site.type === 'blogger') {
+      if (!blogger_id) return res.status(400).json({ error: 'blogger_id is required' });
+      await bloggerService.deletePost(site, blogger_id);
+      return res.json({ success: true });
+    }
+
     if (!wp_id) return res.status(400).json({ error: 'wp_id is required' });
 
     const creds = JSON.parse(site.credentials_json);
