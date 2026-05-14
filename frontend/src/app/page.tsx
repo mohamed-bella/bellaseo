@@ -14,13 +14,15 @@ import {
   CheckCircle2,
   AlertCircle,
   Search,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from 'lucide-react';
 import apiClient from '@/services/apiClient';
 import { getSocket } from '@/services/websocketClient';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import { motion } from 'framer-motion';
+import ProjectStatusGrid from '@/components/dashboard/ProjectStatusGrid';
 
 const WORKFLOW_STATUS_LABELS: Record<string, string> = {
   pending: 'Queued',
@@ -310,6 +312,15 @@ export default function DashboardPage() {
             </Link>
           </motion.div>
         ))}
+      </div>
+
+      {/* ── Real-time Project Status ── */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-black uppercase tracking-tight text-[#1A1D23] flex items-center gap-3">
+          <Layers className="w-6 h-6 text-[#FF642D]" />
+          Project Status Center
+        </h2>
+        <ProjectStatusGrid />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 pt-8">

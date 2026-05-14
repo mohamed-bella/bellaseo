@@ -11,29 +11,61 @@ const { PORT, API_SECRET } = require('../config/env');
 const API_BASE = `http://localhost:${PORT}/api`;
 
 async function triggerCampaignWorkflows(scheduleType) {
-  console.log(`[scheduler] Triggering ${scheduleType} campaigns...`);
+  console.log(`[scheduler] Checking ${scheduleType} campaigns...`);
 
-  // Get current UTC time
   const now = new Date();
-  const currentHour   = now.getUTCHours().toString().padStart(2, '0');
-  const currentMinute = now.getUTCMinutes().toString().padStart(2, '0');
-  const currentTime   = `${currentHour}:${currentMinute}`; // e.g. "09:00"
 
   try {
     const { data: campaigns, error } = await supabase.from('campaigns')
-      .select('id, cron_time, posts_per_run')
+      .select('id, cron_time, cron_timezone, posts_per_run, schedule_type')
       .eq('status', CAMPAIGN_STATUS.ACTIVE)
       .eq('schedule_type', scheduleType);
 
     if (error) throw error;
 
     for (const campaign of campaigns || []) {
-      // For hourly: trigger every campaign regardless of time.
-      // For daily/weekly: only trigger if the campaign's cron_time matches NOW (to the minute).
-      if (scheduleType !== 'hourly') {
+      // 1. Minutely: Always trigger
+      if (scheduleType === SCHEDULE_TYPE.MINUTELY) {
+        // Carry on to trigger
+      } 
+      // 2. Hourly: Trigger only at minute 00
+      else if (scheduleType === SCHEDULE_TYPE.HOURLY) {
+        if (now.getUTCMinutes() !== 0) continue;
+      }
+      // 3. Daily: Trigger if time matches campaign timezone
+      else if (scheduleType === SCHEDULE_TYPE.DAILY) {
+        const currentTimeInTZ = new Intl.DateTimeFormat('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: campaign.cron_timezone || 'UTC'
+        }).format(now);
+
         const targetTime = campaign.cron_time || '09:00';
-        if (targetTime !== currentTime) {
-          console.log(`[scheduler] Skipping campaign ${campaign.id} — scheduled for ${targetTime}, current time is ${currentTime}`);
+        if (targetTime !== currentTimeInTZ) {
+          continue;
+        }
+      }
+      // 4. Weekly: Trigger if time matches AND it is Sunday (0)
+      else if (scheduleType === SCHEDULE_TYPE.WEEKLY) {
+        const dayOfWeek = new Intl.DateTimeFormat('en-GB', {
+          weekday: 'numeric',
+          timeZone: campaign.cron_timezone || 'UTC'
+        }).format(now);
+        
+        // Sunday is 7 or 0 depending on locale, en-GB weekday numeric 1-7 (Mon-Sun)
+        // Wait, Intl.DateTimeFormat with numeric weekday for en-GB: 1=Mon, ..., 7=Sun
+        if (parseInt(dayOfWeek) !== 7) continue;
+
+        const currentTimeInTZ = new Intl.DateTimeFormat('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: campaign.cron_timezone || 'UTC'
+        }).format(now);
+
+        const targetTime = campaign.cron_time || '09:00';
+        if (targetTime !== currentTimeInTZ) {
           continue;
         }
       }
@@ -45,7 +77,7 @@ async function triggerCampaignWorkflows(scheduleType) {
         }, {
           headers: { Authorization: `Bearer ${API_SECRET}` }
         });
-        console.log(`[scheduler] ✅ Triggered workflow for campaign ${campaign.id} (${scheduleType} @ ${currentTime})`);
+        console.log(`[scheduler] ✅ Triggered workflow for campaign ${campaign.id} (${scheduleType})`);
       } catch (err) {
         console.error(`[scheduler] Failed to trigger campaign ${campaign.id}:`, err.message);
       }
@@ -58,18 +90,11 @@ async function triggerCampaignWorkflows(scheduleType) {
 function initScheduler() {
   console.log('[scheduler] Initializing cron jobs...');
 
-  // Hourly: '0 * * * *'
-  cron.schedule('0 * * * *', () => {
+  // Heartbeat: Check every minute for all schedule types
+  cron.schedule('* * * * *', () => {
+    triggerCampaignWorkflows(SCHEDULE_TYPE.MINUTELY);
     triggerCampaignWorkflows(SCHEDULE_TYPE.HOURLY);
-  });
-
-  // Daily: '0 0 * * *' (Midnight)
-  cron.schedule('0 0 * * *', () => {
     triggerCampaignWorkflows(SCHEDULE_TYPE.DAILY);
-  });
-
-  // Weekly: '0 0 * * 0' (Midnight Sunday)
-  cron.schedule('0 0 * * 0', () => {
     triggerCampaignWorkflows(SCHEDULE_TYPE.WEEKLY);
   });
   

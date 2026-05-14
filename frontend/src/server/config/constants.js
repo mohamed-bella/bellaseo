@@ -51,6 +51,7 @@ const LOG_LEVEL = {
 // Schedule types
 const SCHEDULE_TYPE = {
   MANUAL: 'manual',
+  MINUTELY: 'minutely',
   HOURLY: 'hourly',
   DAILY: 'daily',
   WEEKLY: 'weekly',

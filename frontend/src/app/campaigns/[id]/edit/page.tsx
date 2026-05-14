@@ -328,6 +328,7 @@ export default function ProjectStudioPage() {
                       className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground outline-none focus:ring-2 focus:ring-primary/10"
                     >
                       <option value="manual">Manual Only</option>
+                      <option value="minutely">Each Minute (Testing)</option>
                       <option value="daily">Daily Run</option>
                       <option value="hourly">Hourly Run</option>
                       <option value="weekly">Weekly Run</option>
@@ -348,7 +349,7 @@ export default function ProjectStudioPage() {
                </div>
 
                {/* ── Scheduled Time ── */}
-               {campaign.schedule_type !== 'manual' && campaign.schedule_type !== 'hourly' && (
+               {campaign.schedule_type !== 'manual' && campaign.schedule_type !== 'hourly' && campaign.schedule_type !== 'minutely' && (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-border/50">
                    <div className="space-y-3">
                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -387,13 +388,21 @@ export default function ProjectStudioPage() {
                  </div>
                )}
 
-               {campaign.schedule_type === 'hourly' && (
-                 <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-                   <p className="text-[11px] font-bold">
-                     ⚡ Hourly runs trigger at the start of every hour automatically — no time selection needed.
-                   </p>
-                 </div>
-               )}
+                {campaign.schedule_type === 'hourly' && (
+                  <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <p className="text-[11px] font-bold">
+                      ⚡ Hourly runs trigger at the start of every hour automatically — no time selection needed.
+                    </p>
+                  </div>
+                )}
+
+                {campaign.schedule_type === 'minutely' && (
+                  <div className="p-5 rounded-2xl bg-indigo-500/5 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                    <p className="text-[11px] font-bold">
+                      🚀 Testing Mode — This campaign will trigger every single minute. Use with caution!
+                    </p>
+                  </div>
+                )}
 
                {campaign.schedule_type === 'manual' && (
                  <div className="p-5 rounded-2xl bg-secondary border border-border/50 text-muted-foreground">

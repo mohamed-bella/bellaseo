@@ -50,4 +50,43 @@ const stats = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { stats };
+const projectStatus = async (req, res, next) => {
+  try {
+    const [campaigns, keywords, workflows, articles] = await Promise.all([
+      supabase.from('campaigns').select('*'),
+      supabase.from('keywords').select('id, campaign_id, status'),
+      supabase.from('workflows').select('id, campaign_id, status, type').not('status', 'in', '("completed","failed","published")'),
+      supabase.from('articles').select('keyword_id, status').eq('status', 'published')
+    ]);
+
+    if (campaigns.error) throw campaigns.error;
+
+    const results = campaigns.data.map(campaign => {
+      const campKeywords = (keywords.data || []).filter(k => k.campaign_id === campaign.id);
+      const campWorkflows = (workflows.data || []).filter(w => w.campaign_id === campaign.id);
+      const keywordIds = campKeywords.map(k => k.id);
+      const campPublished = (articles.data || []).filter(a => keywordIds.includes(a.keyword_id)).length;
+
+      const pending = campKeywords.filter(k => k.status === 'pending').length;
+      const completed = campKeywords.filter(k => k.status === 'done').length;
+
+      return {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        schedule_type: campaign.schedule_type,
+        cron_time: campaign.cron_time,
+        cron_timezone: campaign.cron_timezone,
+        completedKeywords: completed,
+        publishedArticles: campPublished,
+        activeWorkflows: campWorkflows,
+        pendingKeywords: pending,
+        isFinished: pending === 0 && campWorkflows.length === 0
+      };
+    });
+
+    res.json(results);
+  } catch (err) { next(err); }
+};
+
+module.exports = { stats, projectStatus };

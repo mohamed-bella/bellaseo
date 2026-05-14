@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ChevronLeft, Plus, Eye, CheckCircle2, FileEdit, Settings,
-  Zap, Loader2, Play, Trash2, Globe, XCircle, RotateCcw,
+  Zap, Loader2, Play, Pause, Trash2, Globe, XCircle, RotateCcw,
   FolderOpen, Tag, Clock, BarChart2, ExternalLink, Check,
   X, RefreshCw, ChevronDown, ChevronUp, Layers, LayoutGrid, Library,
   MoreHorizontal, ChevronRight, Search
@@ -352,6 +352,33 @@ export default function ProjectHubPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            className="rounded-full px-6 border-border hover:border-primary/50 text-foreground text-xs font-bold"
+            onClick={async () => {
+              const newStatus = campaign.status === 'active' ? 'paused' : 'active';
+              setActionLoading(prev => ({ ...prev, 'toggle-status': 'loading' }));
+              try {
+                await apiClient.put(`/campaigns/${projectId}`, { status: newStatus });
+                await fetchData();
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setActionLoading(prev => { const n = { ...prev }; delete n['toggle-status']; return n; });
+              }
+            }}
+            disabled={actionLoading['toggle-status'] === 'loading'}
+          >
+            {actionLoading['toggle-status'] === 'loading' ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : campaign.status === 'active' ? (
+              <Pause className="w-4 h-4 mr-2 text-amber-500" />
+            ) : (
+              <Play className="w-4 h-4 mr-2 text-emerald-500" />
+            )}
+            {campaign.status === 'active' ? 'Pause Engine' : 'Resume Engine'}
+          </Button>
+
           <Button
             variant="outline"
             className="rounded-full px-6 border-border hover:border-primary/50 text-foreground text-xs font-bold"

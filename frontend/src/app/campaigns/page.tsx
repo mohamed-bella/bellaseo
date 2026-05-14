@@ -185,12 +185,19 @@ export default function CampaignsPage() {
     } catch (err) { console.error('Delete failed:', err); }
   };
 
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    setStatusUpdatingId(id);
     try {
       await apiClient.put(`/campaigns/${id}`, { status: newStatus });
-      fetchCampaigns();
-    } catch (err) { console.error('Failed to update status:', err); }
+      await fetchCampaigns();
+    } catch (err) { 
+      console.error('Failed to update status:', err); 
+    } finally {
+      setStatusUpdatingId(null);
+    }
   };
 
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -406,11 +413,16 @@ export default function CampaignsPage() {
                         <button
                           title={c.status === 'active' ? 'Pause auto-posting' : 'Resume auto-posting'}
                           onClick={() => handleToggleStatus(c.id, c.status)}
-                          className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#F3F4F6] transition-colors"
+                          disabled={statusUpdatingId === c.id}
+                          className="flex items-center justify-center w-9 h-9 rounded-xl hover:bg-[#F3F4F6] transition-colors disabled:opacity-50"
                         >
-                          {c.status === 'active'
-                            ? <Pause className="w-4 h-4 text-amber-500" />
-                            : <Play className="w-4 h-4 text-emerald-500" />}
+                          {statusUpdatingId === c.id ? (
+                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          ) : c.status === 'active' ? (
+                            <Pause className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <Play className="w-4 h-4 text-emerald-500" />
+                          )}
                         </button>
 
                         {/* Edit: Redirect to Studio */}
