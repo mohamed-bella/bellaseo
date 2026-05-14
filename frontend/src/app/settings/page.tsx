@@ -208,6 +208,13 @@ export default function SettingsPage() {
               )}
             </button>
             <button
+              onClick={() => setActiveTab('blogger')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'blogger' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 'text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="font-medium text-sm">Blogger OAuth</span>
+            </button>
+            <button
               onClick={() => setActiveTab('database')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'database' ? 'bg-primary/10 text-primary border border-primary/20' : 'text-muted-foreground hover:bg-secondary'}`}
             >
@@ -840,6 +847,11 @@ export default function SettingsPage() {
                </div>
              );
            })()}
+
+           {/* BLOGGER OAUTH TAB */}
+           {activeTab === 'blogger' && (
+             <BloggerOAuthTab />
+           )}
 
            {/* SYSTEM HEALTH TAB */}
             {activeTab === 'database' && (

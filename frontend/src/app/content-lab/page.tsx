@@ -148,7 +148,7 @@ export default function ContentLab() {
                   type="text" 
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. Best IPTV Providers"
+                  placeholder="e.g. Best Coffee Makers"
                   className="w-full bg-white border border-[#E5E8EB] rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] outline-none"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function ContentLab() {
                   type="text" 
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
-                  placeholder="e.g. best iptv 2024"
+                  placeholder="e.g. best coffee maker 2025"
                   className="w-full bg-white border border-[#E5E8EB] rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-[#FF642D]/20 focus:border-[#FF642D] outline-none"
                 />
               </div>

@@ -90,7 +90,6 @@ export default function ProjectStudioPage() {
   const globalDirectives = globalSettings?.article_config || {};
   
   const getEffectiveValue = (key: string, defaultValue: any) => {
-    // If project has an override, use it. Otherwise, use global. Otherwise, use default.
     if (localConfig[key] !== undefined && localConfig[key] !== '' && localConfig[key] !== null) {
       return { value: localConfig[key], isOverridden: true };
     }
@@ -105,14 +104,41 @@ export default function ProjectStudioPage() {
     const next = { ...localConfig };
     delete next[key];
     setLocalConfig(next);
-    toast.info(`Reset ${key} to inherit from Global Studio.`);
+    toast.info(`Reset to inherit from Global Studio.`);
+  };
+
+  const loadProTemplate = () => {
+    const template = `You are an elite SEO content strategist and expert writer for the {{niche}} niche.
+
+# YOUR PERSONA
+- Name: [Author Name]
+- Expertise: [Brief bio explaining why you are an authority]
+- Target Audience: [Who are you writing for?]
+
+# CONTENT & SEO RULES
+- TONE: Professional, helpful, and data-driven.
+- LENGTH: Aim for {{targetLength}} words.
+- KEYWORDS: Use "{{keyword}}" in H1, first paragraph, and 2+ H2s.
+- LINKS: Include 1-2 internal links and 2-3 external authority links.
+- MEDIA: Use [IMAGE_PLACEHOLDER: description] where visual aid is needed.
+
+# STRUCTURE RULES
+1. Catchy H1 Title (must include {{keyword}})
+2. Engaging Intro (mention {{keyword}} in first sentence)
+3. H2/H3 Body Sections (focus on user intent: {{intent}})
+4. FAQ Section (using <h3> and <p>)
+5. Conclusion with CTA
+
+# HTML OUTPUT
+- Output ONLY raw HTML. No markdown, no explanations.`;
+    
+    updateLocalConfig('master_prompt_template', template);
+    toast.success('Pro Template loaded. Now personalize it!');
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // We save the campaign name/niche too if we want, but user mostly asked for config.
-      // We'll update the main campaign fields + the article_config JSON.
       await apiClient.put(`/campaigns/${id}`, {
         ...campaign,
         article_config: localConfig
@@ -133,47 +159,6 @@ export default function ProjectStudioPage() {
       </div>
     );
   }
-
-  // Helper for rendering inherited fields
-  const ConfigField = ({ label, keyName, type = 'text', placeholder = '', isTextArea = false }: any) => {
-    const { value, isOverridden } = getEffectiveValue(keyName, '');
-    
-    return (
-      <div className="space-y-2 group">
-        <div className="flex items-center justify-between">
-          <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            {label}
-            {isOverridden ? (
-              <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md flex items-center gap-1 group-hover:bg-primary group-hover:text-white transition-colors cursor-pointer" onClick={() => clearOverride(keyName)}>
-                <Check className="w-3 h-3" /> Custom Override
-              </span>
-            ) : (
-              <span className="text-[9px] bg-secondary text-muted-foreground/60 px-1.5 py-0.5 rounded-md">
-                Inherited from Global
-              </span>
-            )}
-          </label>
-        </div>
-        
-        {isTextArea ? (
-          <textarea
-            value={value}
-            onChange={(e) => updateLocalConfig(keyName, e.target.value)}
-            className={`w-full h-40 bg-background/50 border rounded-2xl p-4 text-sm font-medium focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all ${isOverridden ? 'border-primary/40' : 'border-border'}`}
-            placeholder={placeholder}
-          />
-        ) : (
-          <input
-            type={type}
-            value={value}
-            onChange={(e) => updateLocalConfig(keyName, type === 'number' ? parseInt(e.target.value) : e.target.value)}
-            className={`w-full bg-background/50 border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all ${isOverridden ? 'border-primary/40' : 'border-border'}`}
-            placeholder={placeholder}
-          />
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="max-w-[1600px] mx-auto min-h-[90vh] flex flex-col gap-6 animate-in fade-in duration-700">
@@ -211,133 +196,114 @@ export default function ProjectStudioPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-8 mt-4">
         
-        {/* ── Tabs Sidebar ── */}
-        <aside className="space-y-2">
-          <button 
-            onClick={() => setActiveTab('directives')}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'directives' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
-          >
-            <Zap className="w-5 h-5" />
-            <span className="text-sm font-black uppercase tracking-widest">AI Directives</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('author')}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'author' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
-          >
-            <User className="w-5 h-5" />
-            <span className="text-sm font-black uppercase tracking-widest">Author Persona</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('schedule')}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'schedule' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
-          >
-            <Settings className="w-5 h-5" />
-            <span className="text-sm font-black uppercase tracking-widest">Automation</span>
-          </button>
-          <button 
-            onClick={() => setActiveTab('target')}
-            className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'target' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
-          >
-            <Globe className="w-5 h-5" />
-            <span className="text-sm font-black uppercase tracking-widest">Publication</span>
-          </button>
+        {/* ── Sidebar ── */}
+        <aside className="space-y-4">
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={() => setActiveTab('directives')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'directives' || activeTab === 'author' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Zap className="w-5 h-5" />
+              <span className="text-sm font-black uppercase tracking-widest">Master Instruction</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('schedule')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'schedule' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Settings className="w-5 h-5" />
+              <span className="text-sm font-black uppercase tracking-widest">Automation</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('target')}
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl text-left transition-all border ${activeTab === 'target' ? 'bg-primary/10 border-primary/30 text-primary' : 'bg-transparent border-transparent text-muted-foreground hover:bg-secondary'}`}
+            >
+              <Globe className="w-5 h-5" />
+              <span className="text-sm font-black uppercase tracking-widest">Publication</span>
+            </button>
+          </div>
 
-          <div className="p-6 mt-8 rounded-3xl bg-primary/5 border border-primary/10 space-y-4">
+          <div className="p-8 rounded-[32px] bg-secondary border border-border/50 space-y-6">
              <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Inheritance Info</h4>
+                <Info className="w-5 h-5 text-primary" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Prompt Guidelines</h4>
              </div>
-             <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
-               Settings marked in orange are specific to this project. Unmodified fields automatically use your Global Studio defaults.
-             </p>
+             
+             <ul className="space-y-4">
+                {[
+                  { t: "Persona", d: "Define who the AI is (e.g., 'Expert Dentist')." },
+                  { t: "Word Count", d: "Specify target length (e.g., '1500 words')." },
+                  { t: "Formatting", d: "Rules for H2, H3, lists, and tables." },
+                  { t: "SEO Rules", d: "Keyword density and linking strategy." },
+                  { t: "Language", d: "Force specific dialects or styles." }
+                ].map((item, idx) => (
+                  <li key={idx} className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-primary">{item.t}</p>
+                    <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">{item.d}</p>
+                  </li>
+                ))}
+             </ul>
+
+             <div className="pt-4 border-t border-border/50">
+               <p className="text-[10px] text-muted-foreground italic leading-relaxed">
+                 Use tokens like <code className="text-primary font-bold">{"{{keyword}}"}</code> or <code className="text-primary font-bold">{"{{niche}}"}</code> to keep instructions dynamic.
+               </p>
+             </div>
           </div>
         </aside>
 
         {/* ── Main Content Area ── */}
         <main className="card-premium p-8 lg:p-10 border-border bg-card/30">
           
-          {activeTab === 'directives' && (
+          {(activeTab === 'directives' || activeTab === 'author') && (
             <div className="space-y-8 animate-in slide-in-from-bottom-2 duration-400">
-               <div className="flex items-center gap-4 mb-10">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20">
-                     <Wand2 className="w-6 h-6" />
+               <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20">
+                       <Wand2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-foreground uppercase tracking-tighter italic">Master Project Instruction</h2>
+                      <p className="text-xs font-bold text-muted-foreground mt-0.5">The "Brain" of this specific project.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-black text-foreground">Writing Directives</h2>
-                    <p className="text-xs font-bold text-muted-foreground mt-0.5 italic">Tailor the AI's output for this project's niche.</p>
+
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={loadProTemplate}
+                      className="text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-2 rounded-xl hover:bg-primary hover:text-white transition-all flex items-center gap-2"
+                    >
+                      <Sparkles className="w-3 h-3" /> Load Pro Template
+                    </button>
+                    {localConfig.master_prompt_template && (
+                      <button 
+                        onClick={() => clearOverride('master_prompt_template')}
+                        className="text-[9px] font-black uppercase tracking-widest bg-secondary text-muted-foreground px-3 py-2 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all"
+                      >
+                        Reset to Global
+                      </button>
+                    )}
                   </div>
                </div>
 
-               <ConfigField 
-                 label="Master Generation Template" 
-                 keyName="master_prompt_template" 
-                 isTextArea 
-                 placeholder="e.g. Focus on technical details. Use many bullet points. Avoid mentioning competitors..." 
-               />
-
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                  <ConfigField label="Language" keyName="language" />
-                  <ConfigField label="Tone" keyName="tone" />
-                  <ConfigField label="Word Count" keyName="target_word_count" type="number" />
+               <div className="space-y-4">
+                  <textarea
+                    value={localConfig.master_prompt_template || globalDirectives.master_prompt_template || ''}
+                    onChange={(e) => updateLocalConfig('master_prompt_template', e.target.value)}
+                    className="w-full h-[600px] bg-background/50 border border-border rounded-[32px] p-8 text-sm font-medium focus:outline-none focus:ring-8 focus:ring-primary/5 transition-all leading-relaxed font-mono"
+                    placeholder="Describe exactly how you want the articles written..."
+                  />
+                  
+                  <div className="flex items-center justify-between px-4">
+                    <p className="text-[10px] text-muted-foreground font-bold">
+                      {localConfig.master_prompt_template ? "✅ Using Project Custom Prompt" : "⚪ Inheriting Global Studio Prompt"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground font-bold">
+                      {(localConfig.master_prompt_template || globalDirectives.master_prompt_template || '').length} characters
+                    </p>
+                  </div>
                </div>
-            </div>
-          )}
-
-          {activeTab === 'author' && (
-            <div className="space-y-10 animate-in slide-in-from-bottom-2 duration-400">
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center border border-primary/20">
-                     <Target className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-foreground">Author EEAT Profile</h2>
-                    <p className="text-xs font-bold text-muted-foreground mt-0.5 italic">Set who is "writing" these articles to boost trust.</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                   <div className="space-y-8">
-                     {/* For Profile, we'll nest them in a local author_profile object */}
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Expert Name</label>
-                        <input 
-                           value={localConfig.author_profile?.name || globalDirectives.author_profile?.name || ''}
-                           onChange={(e) => updateLocalConfig('author_profile', { ...localConfig.author_profile, name: e.target.value })}
-                           className="w-full bg-background/30 border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/10 transition-all outline-none"
-                           placeholder="e.g. Sarah Jenkins"
-                        />
-                     </div>
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Expert Bio</label>
-                        <textarea 
-                           value={localConfig.author_profile?.bio || globalDirectives.author_profile?.bio || ''}
-                           onChange={(e) => updateLocalConfig('author_profile', { ...localConfig.author_profile, bio: e.target.value })}
-                           className="w-full h-32 bg-background/30 border border-border rounded-xl px-4 py-3 text-sm font-medium text-foreground focus:ring-2 focus:ring-primary/10 transition-all outline-none resize-none"
-                           placeholder="The bio injected into schema and AI context..."
-                        />
-                     </div>
-                   </div>
-
-                   <div className="space-y-8">
-                      <div className="space-y-4">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Target Audience</label>
-                        <input 
-                           value={localConfig.author_profile?.audience || globalDirectives.author_profile?.audience || ''}
-                           onChange={(e) => updateLocalConfig('author_profile', { ...localConfig.author_profile, audience: e.target.value })}
-                           className="w-full bg-background/30 border border-border rounded-xl px-4 py-3 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/10 transition-all outline-none"
-                           placeholder="e.g. Tech-savvy enthusiasts"
-                        />
-                      </div>
-                      <div className="p-8 rounded-[32px] bg-secondary border border-border/50 text-center space-y-4">
-                         <Info className="w-8 h-8 text-primary mx-auto opacity-50" />
-                         <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">
-                           "The author's expertise is the soul of your content. Setting this uniquely for each project tells Google that actual human experts are behind the site."
-                         </p>
-                      </div>
-                   </div>
-                </div>
             </div>
           )}
 

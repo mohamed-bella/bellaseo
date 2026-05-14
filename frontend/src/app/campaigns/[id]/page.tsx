@@ -76,14 +76,6 @@ export default function ProjectHubPage() {
   const [isGenerating, setIsGenerating]             = useState(false);
   const [triggerMsg, setTriggerMsg]                 = useState<{ msg: string; isError: boolean } | null>(null);
 
-  // preflight
-  const [isPreFlightOpen, setIsPreFlightOpen]     = useState(false);
-  const [promptTemplate, setPromptTemplate]       = useState('');
-  const [targetIdsForGen, setTargetIdsForGen]     = useState<string[]>([]);
-  const [isFetchingTemplate, setIsFetchingTemplate] = useState(false);
-  const [customVars, setCustomVars]               = useState<Record<string, string>>({});
-  const [isRegeneratingArticleId, setIsRegeneratingArticleId] = useState<string | null>(null);
-
   // article actions
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [artStatusFilter, setArtStatusFilter] = useState<ArtTab>('All');
@@ -267,52 +259,26 @@ export default function ProjectHubPage() {
   };
 
   // ── generation ──────────────────────────────────────────────────────────────
-  const fetchPromptTemplate = async () => {
-    setIsFetchingTemplate(true);
-    try {
-      const { data } = await apiClient.get(`/workflows/prompt-template?campaign_id=${projectId}`);
-      setPromptTemplate(data.template);
-    } catch (err) { console.error(err); }
-    finally { setIsFetchingTemplate(false); }
-  };
-
-  const handleOpenPreFlight = (ids: string[]) => {
+  const handleGenerate = async (ids: string[], isRegenId: string | null = null) => {
     if (!ids.length) return;
-    setTargetIdsForGen(ids);
-    setIsRegeneratingArticleId(null);
-    setCustomVars({ targetLength: String(formData.target_word_count), style: formData.article_style });
-    fetchPromptTemplate();
-    setIsPreFlightOpen(true);
-  };
-
-  const handleRegenerateRequest = (article: any) => {
-    setIsEditorOpen(false);
-    setIsRegeneratingArticleId(article.id);
-    setTargetIdsForGen([article.keyword_id]);
-    setCustomVars({ targetLength: String(formData.target_word_count), style: formData.article_style });
-    fetchPromptTemplate();
-    setIsPreFlightOpen(true);
-  };
-
-  const handleGenerate = async () => {
-    if (!targetIdsForGen.length) return;
-    setIsGenerating(true); setTriggerMsg(null); setIsPreFlightOpen(false);
+    setIsGenerating(true); 
+    setTriggerMsg(null); 
+    
     try {
-      if (isRegeneratingArticleId) {
-        await apiClient.post(`/articles/${isRegeneratingArticleId}/regenerate`, {
-          prompt_override: promptTemplate,
-          target_length: parseInt(customVars['targetLength'] || String(formData.target_word_count)),
-          style: customVars['style'] || formData.article_style,
+      if (isRegenId) {
+        await apiClient.post(`/articles/${isRegenId}/regenerate`, {
+          target_length: formData.target_word_count,
+          style: formData.article_style,
         });
         setTriggerMsg({ msg: `Regenerating article…`, isError: false });
-        setIsRegeneratingArticleId(null);
         fetchData();
       } else {
         await apiClient.post('/workflows/trigger', {
-          campaign_id: projectId, type: 'article_generation',
-          keyword_ids: targetIdsForGen, prompt_override: promptTemplate,
+          campaign_id: projectId, 
+          type: 'article_generation',
+          keyword_ids: ids,
         });
-        setTriggerMsg({ msg: `AI writing ${targetIdsForGen.length} article(s)…`, isError: false });
+        setTriggerMsg({ msg: `AI writing ${ids.length} article(s)…`, isError: false });
       }
       setSelectedKeywordIds(new Set());
     } catch (err: any) {
@@ -395,7 +361,7 @@ export default function ProjectHubPage() {
           </Button>
           <Button
             className="rounded-full px-6 bg-foreground text-background hover:bg-primary transition-all text-xs font-bold shadow-xl"
-            onClick={() => handleOpenPreFlight(Array.from(selectedKeywordIds))}
+            onClick={() => handleGenerate(Array.from(selectedKeywordIds))}
             disabled={selectedKeywordIds.size === 0 || isGenerating}
             isLoading={isGenerating}
           >
@@ -563,9 +529,9 @@ export default function ProjectHubPage() {
                                   key={k.id} k={k} articles={articles} 
                                   selectedKeywordIds={selectedKeywordIds} 
                                   handleToggleSelect={handleToggleSelect} 
-                                  handleOpenPreFlight={handleOpenPreFlight} 
                                   handleDeleteKeyword={handleDeleteKeyword} 
                                   openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} 
+                                  onGenerate={() => handleGenerate([k.id])}
                                 />
                               ))}
                             </div>
@@ -588,9 +554,9 @@ export default function ProjectHubPage() {
                                 key={k.id} k={k} articles={articles} 
                                 selectedKeywordIds={selectedKeywordIds} 
                                 handleToggleSelect={handleToggleSelect} 
-                                handleOpenPreFlight={handleOpenPreFlight} 
                                 handleDeleteKeyword={handleDeleteKeyword} 
                                 openEditor={(art) => { setSelectedArticle(art); setIsEditorOpen(true); }} 
+                                onGenerate={() => handleGenerate([k.id])}
                               />
                             ))}
                          </div>
@@ -706,59 +672,7 @@ export default function ProjectHubPage() {
         )}
       </AnimatePresence>
 
-      {/* ── PRE-FLIGHT MODAL ── */}
-      <Modal isOpen={isPreFlightOpen} onClose={() => setIsPreFlightOpen(false)} title={isRegeneratingArticleId ? 'Regeneration Override' : 'AI Pre-Flight'} maxWidth="max-w-2xl w-full">
-        <div className="space-y-5">
-          <div className="bg-[#FFF5F0] border border-[#FDDDD0] p-4 rounded-xl flex gap-3 items-start">
-            <Zap className="w-5 h-5 text-[#FF642D] shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-bold text-[#1A1D23]">Generation Fine-Tuning</p>
-              <p className="text-xs text-[#9CA3AF] mt-0.5">
-                Targeting <b className="text-[#1A1D23]">{targetIdsForGen.length}</b> topic(s). Override instructions or leave blank to use campaign defaults.
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-[#9CA3AF] mb-2 block">Override Instructions</label>
-            <textarea
-              value={promptTemplate}
-              onChange={e => setPromptTemplate(e.target.value)}
-              className="w-full h-28 border border-[#E5E8EB] rounded-xl p-4 text-xs font-mono text-emerald-700 bg-[#F9FAFB] focus:outline-none focus:border-[#FF642D] resize-none"
-              placeholder="e.g. Focus on technical specs, keep intro very short…"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-1">Word Count</label>
-              <input
-                type="number"
-                value={customVars['targetLength'] || formData.target_word_count}
-                onChange={e => setCustomVars({ ...customVars, targetLength: e.target.value })}
-                className="w-full border border-[#E5E8EB] rounded-lg px-3 py-2 text-sm text-[#1A1D23] focus:outline-none focus:border-[#FF642D]"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-1">Tone</label>
-              <input
-                type="text"
-                value={customVars['style'] || formData.article_style}
-                onChange={e => setCustomVars({ ...customVars, style: e.target.value })}
-                className="w-full border border-[#E5E8EB] rounded-lg px-3 py-2 text-sm text-[#1A1D23] focus:outline-none focus:border-[#FF642D]"
-                placeholder="informative"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-[#E5E8EB]">
-            <Button variant="ghost" onClick={() => setIsPreFlightOpen(false)}>Cancel</Button>
-            <Button className="bg-[#1A1D23] hover:bg-[#FF642D] transition-colors" onClick={handleGenerate} isLoading={isGenerating}>
-              <Zap className="w-4 h-4 mr-2" /> Start Generation
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* AI PRE-FLIGHT MODAL REMOVED FOR FRICTIONLESS WORKFLOW */}
 
       {/* ── EDITOR MODAL ── */}
       <Modal isOpen={isEditorOpen} onClose={() => { setIsEditorOpen(false); setSelectedArticle(null); }} maxWidth="max-w-[1400px] w-full" noPadding>
@@ -767,7 +681,7 @@ export default function ProjectHubPage() {
             article={selectedArticle}
             onClose={() => { setIsEditorOpen(false); setSelectedArticle(null); }}
             onUpdate={() => { setIsEditorOpen(false); fetchData(); }}
-            onRegenerate={() => handleRegenerateRequest(selectedArticle)}
+            onRegenerate={() => handleGenerate([selectedArticle.keyword_id], selectedArticle.id)}
           />
         )}
       </Modal>
@@ -857,10 +771,10 @@ export default function ProjectHubPage() {
 }
 
 // ── KeywordRow sub-component ──────────────────────────────────────────────────
-function KeywordRow({ k, articles, selectedKeywordIds, handleToggleSelect, handleOpenPreFlight, handleDeleteKeyword, openEditor }: {
+function KeywordRow({ k, articles, selectedKeywordIds, handleToggleSelect, onGenerate, handleDeleteKeyword, openEditor }: {
   k: any; articles: any[]; selectedKeywordIds: Set<string>;
   handleToggleSelect: (id: string) => void;
-  handleOpenPreFlight: (ids: string[]) => void;
+  onGenerate: () => void;
   handleDeleteKeyword: (id: string) => void;
   openEditor: (art: any) => void;
 }) {
@@ -928,7 +842,7 @@ function KeywordRow({ k, articles, selectedKeywordIds, handleToggleSelect, handl
           </button>
         ) : isPending ? (
           <button
-            onClick={() => handleOpenPreFlight([k.id])}
+            onClick={onGenerate}
             className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all border border-primary/20"
           >
             <Play className="w-3.5 h-3.5" /> Write

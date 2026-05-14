@@ -1,65 +1,63 @@
 'use strict';
 
 /**
- * Google OAuth2 — One-click Blogger connect.
+ * Google OAuth2 — System-wide Blogger credentials.
  *
- * Uses APP-level credentials from env (no per-user Google Cloud setup needed).
- * Flow:
- *   1. GET /auth/google/start          → redirect to Google consent
- *   2. GET /auth/google/callback       → exchange code, fetch user's blogs, redirect to /sites with data
+ * One-time admin setup: authorize once → refresh_token saved to system_settings.
+ * All Blogger sites use these shared app credentials — no per-site auth needed.
+ *
+ * Routes (mounted at /auth/google, no /api prefix, no requireAuth):
+ *   GET /auth/google/start      → redirect to Google consent screen
+ *   GET /auth/google/callback   → exchange code, save tokens, redirect to /settings
  */
 
 const express  = require('express');
 const axios    = require('axios');
 const env      = require('../../config/env');
+const supabase = require('../../config/database');
 
 const router = express.Router();
 
 const AUTH_BASE_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL     = 'https://oauth2.googleapis.com/token';
-const BLOGGER_API   = 'https://www.googleapis.com/blogger/v3';
 const SCOPES        = 'https://www.googleapis.com/auth/blogger';
 
 function getRedirectUri() {
   return env.GOOGLE_REDIRECT_URI || 'https://seo.app.mohamedbella.com/auth/google/callback';
 }
 
-// ─── Step 1: Start OAuth ──────────────────────────────────────────────────────
+// ─── Step 1: Redirect to Google ──────────────────────────────────────────────
 
 router.get('/start', (req, res) => {
-  const clientId = env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    return res.status(500).send(
-      'GOOGLE_CLIENT_ID not set in environment. Add it to your .env file.'
-    );
+  if (!env.GOOGLE_CLIENT_ID) {
+    return res.status(500).send('GOOGLE_CLIENT_ID not set in .env');
   }
 
   const params = new URLSearchParams({
-    client_id:     clientId,
+    client_id:     env.GOOGLE_CLIENT_ID,
     redirect_uri:  getRedirectUri(),
     response_type: 'code',
     scope:         SCOPES,
     access_type:   'offline',
-    prompt:        'consent',
+    prompt:        'consent', // force consent so refresh_token is always returned
   });
 
   return res.redirect(`${AUTH_BASE_URL}?${params.toString()}`);
 });
 
-// ─── Step 2: Callback — exchange code, fetch blogs, pass to frontend ─────────
+// ─── Step 2: Exchange code → save tokens system-wide ─────────────────────────
 
 router.get('/callback', async (req, res) => {
   const { code, error: oauthError } = req.query;
 
   if (oauthError) {
-    return res.redirect(`/sites?blogger_oauth=error&reason=${encodeURIComponent(oauthError)}`);
+    return res.redirect(`/settings?blogger_oauth=error&reason=${encodeURIComponent(oauthError)}`);
   }
   if (!code) {
-    return res.redirect('/sites?blogger_oauth=error&reason=missing_code');
+    return res.redirect('/settings?blogger_oauth=error&reason=missing_code');
   }
 
   try {
-    // Exchange code for tokens
     const tokenResp = await axios.post(TOKEN_URL, {
       code,
       client_id:     env.GOOGLE_CLIENT_ID,
@@ -70,33 +68,29 @@ router.get('/callback', async (req, res) => {
 
     const { access_token, refresh_token } = tokenResp.data;
 
-    // Fetch the user's Blogger blogs
-    const blogsResp = await axios.get(`${BLOGGER_API}/users/self/blogs`, {
-      headers: { Authorization: `Bearer ${access_token}` },
-      timeout: 10000,
-    });
+    if (!refresh_token) {
+      // Shouldn't happen with prompt=consent, but guard anyway
+      return res.redirect('/settings?blogger_oauth=error&reason=no_refresh_token_returned');
+    }
 
-    const blogs = (blogsResp.data.items || []).map(b => ({
-      id:          b.id,
-      name:        b.name,
-      url:         b.url,
-      description: b.description || '',
-      posts:       b.posts?.totalItems || 0,
-    }));
+    // Persist tokens in system_settings — reuse existing upsert pattern
+    await supabase.from('system_settings').upsert(
+      {
+        key:        'google_blogger_tokens',
+        value:      JSON.stringify({ access_token, refresh_token }),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'key' }
+    );
 
-    // Pass everything to frontend via base64-encoded query param
-    const payload = Buffer.from(JSON.stringify({
-      access_token,
-      refresh_token: refresh_token || null,
-      blogs,
-    })).toString('base64url');
+    // Bust settingsService cache
+    try { require('../services/settingsService').invalidateCache?.(); } catch {}
 
-    return res.redirect(`/sites?blogger_oauth=pick&data=${payload}`);
-
+    return res.redirect('/settings?blogger_oauth=success');
   } catch (err) {
     const msg = err.response?.data?.error_description || err.message || 'token_exchange_failed';
     console.error('[googleOAuth] Callback error:', msg);
-    return res.redirect(`/sites?blogger_oauth=error&reason=${encodeURIComponent(msg)}`);
+    return res.redirect(`/settings?blogger_oauth=error&reason=${encodeURIComponent(msg)}`);
   }
 });
 

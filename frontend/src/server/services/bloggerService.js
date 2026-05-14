@@ -4,7 +4,9 @@
  */
 'use strict';
 
-const axios = require('axios');
+const axios           = require('axios');
+const env             = require('../config/env');
+const settingsService = require('./settingsService');
 
 const BLOGGER_API = 'https://www.googleapis.com/blogger/v3';
 const TOKEN_URL   = 'https://oauth2.googleapis.com/token';
@@ -12,25 +14,48 @@ const TOKEN_URL   = 'https://oauth2.googleapis.com/token';
 // ─── TOKEN MANAGEMENT ─────────────────────────────────────────────────────────
 
 /**
- * Return a valid access token — refresh if client creds + refresh_token are present.
- * Falls back to stored access_token if no refresh capability.
+ * Get a valid access token.
+ * Priority: site-level creds → system_settings google_blogger_tokens → env fallback.
+ * Always refreshes using refresh_token + app client credentials.
  */
-async function getAccessToken(creds) {
-  if (creds.refresh_token && creds.client_id && creds.client_secret) {
+async function getAccessToken(creds = {}) {
+  // Resolve refresh_token: site creds first, then system-wide setting
+  let refreshToken = creds.refresh_token || null;
+  let storedAccessToken = creds.access_token || null;
+
+  if (!refreshToken) {
+    const systemTokens = await settingsService.getSetting('google_blogger_tokens');
+    if (systemTokens) {
+      try {
+        const parsed = typeof systemTokens === 'string' ? JSON.parse(systemTokens) : systemTokens;
+        refreshToken = parsed.refresh_token || null;
+        storedAccessToken = storedAccessToken || parsed.access_token || null;
+      } catch {}
+    }
+  }
+
+  // Use app-level client credentials from env (always)
+  const clientId     = env.GOOGLE_CLIENT_ID;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET;
+
+  if (refreshToken && clientId && clientSecret) {
     try {
       const resp = await axios.post(TOKEN_URL, {
-        client_id:     creds.client_id,
-        client_secret: creds.client_secret,
-        refresh_token: creds.refresh_token,
+        client_id:     clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
         grant_type:    'refresh_token',
       }, { timeout: 10000 });
       return resp.data.access_token;
     } catch (err) {
-      console.warn('[blogger] Token refresh failed, falling back to stored token:', err.message);
+      console.warn('[blogger] Token refresh failed, trying stored token:', err.message);
     }
   }
-  if (!creds.access_token) throw new Error('No access_token available. Add an OAuth access token or refresh credentials.');
-  return creds.access_token;
+
+  if (!storedAccessToken) {
+    throw new Error('No Blogger OAuth token found. Go to Settings → connect Google account first.');
+  }
+  return storedAccessToken;
 }
 
 function authHeaders(accessToken) {

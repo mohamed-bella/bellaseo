@@ -118,10 +118,6 @@ function SitesPageInner() {
       username: '',
       app_password: '',
       blog_id: '',
-      access_token: '',
-      refresh_token: '',
-      client_id: '',
-      client_secret: '',
     }
   });
 
@@ -171,13 +167,9 @@ function SitesPageInner() {
         gsc_service_account: data.gsc_service_account || '',
         ga4_property_id: data.ga4_property_id || '',
         credentials: {
-          username:      data.credentials?.username      || '',
-          app_password:  data.credentials?.app_password  || '',
-          blog_id:       data.credentials?.blog_id       || '',
-          access_token:  data.credentials?.access_token  || '',
-          refresh_token: data.credentials?.refresh_token || '',
-          client_id:     data.credentials?.client_id     || '',
-          client_secret: data.credentials?.client_secret || '',
+          username:     data.credentials?.username     || '',
+          app_password: data.credentials?.app_password || '',
+          blog_id:      data.credentials?.blog_id      || '',
         }
       });
       setIsModalOpen(true);
@@ -194,7 +186,7 @@ function SitesPageInner() {
     setFormData({
       name: '', type: 'wordpress', api_url: '',
       gsc_service_account: '', ga4_property_id: '',
-      credentials: { username: '', app_password: '', blog_id: '', access_token: '', refresh_token: '', client_id: '', client_secret: '' }
+      credentials: { username: '', app_password: '', blog_id: '' }
     });
   };
 
@@ -207,11 +199,8 @@ function SitesPageInner() {
         if (formData.credentials.username) creds.username = formData.credentials.username;
         if (formData.credentials.app_password) creds.app_password = formData.credentials.app_password;
       } else {
+        // Blogger: only blog_id needed — tokens come from system OAuth
         if (formData.credentials.blog_id) creds.blog_id = formData.credentials.blog_id;
-        if (formData.credentials.access_token) creds.access_token = formData.credentials.access_token;
-        if (formData.credentials.refresh_token) creds.refresh_token = formData.credentials.refresh_token;
-        if (formData.credentials.client_id) creds.client_id = formData.credentials.client_id;
-        if (formData.credentials.client_secret) creds.client_secret = formData.credentials.client_secret;
       }
       
       const payload: any = { 
@@ -838,68 +827,25 @@ function SitesPageInner() {
                 </>
              ) : (
                 <>
-                  <div className="p-3 bg-white/50 border border-primary/10 rounded-xl space-y-1">
-                    <p className="text-[11px] font-bold text-foreground flex items-center gap-2">
-                      <HelpCircle className="w-3.5 h-3.5 text-primary" />
-                      How to get Blogger credentials?
-                    </p>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Go to <strong>Google Cloud Console</strong> → APIs &amp; Services → Credentials → Create OAuth 2.0 Client ID. Enable the Blogger API. Use the Blog ID from your Blogger dashboard URL (e.g. <code>1234567890</code>).
-                      <span className="block mt-1 text-primary italic font-medium">Tip: Add a refresh_token + client_id + client_secret for auto-renewal so tokens never expire.</span>
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-start gap-2.5 p-3 bg-orange-500/5 border border-orange-500/20 rounded-xl">
+                    <CheckCircle2 className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
                     <div>
-                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Blog ID <span className="text-rose-400">*</span></label>
-                      <input
-                        required
-                        value={formData.credentials.blog_id}
-                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, blog_id: e.target.value}})}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
-                        placeholder="1234567890"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Client ID (optional)</label>
-                      <input
-                        value={formData.credentials.client_id}
-                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, client_id: e.target.value}})}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
-                        placeholder="*.apps.googleusercontent.com"
-                      />
+                      <p className="text-[11px] font-bold text-foreground">System Google account handles auth</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        OAuth tokens are managed system-wide. Just enter your Blog ID — find it in your Blogger dashboard URL or post URL.
+                      </p>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">OAuth Access Token <span className="text-rose-400">*</span></label>
-                    <textarea
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Blog ID <span className="text-rose-400">*</span></label>
+                    <input
                       required
-                      value={formData.credentials.access_token}
-                      onChange={e => setFormData({...formData, credentials: {...formData.credentials, access_token: e.target.value}})}
-                      className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm h-16 font-mono"
-                      placeholder="ya29...."
+                      value={formData.credentials.blog_id}
+                      onChange={e => setFormData({...formData, credentials: {...formData.credentials, blog_id: e.target.value}})}
+                      className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
+                      placeholder="1234567890123456789"
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Refresh Token (optional)</label>
-                      <input
-                        type={editingSite ? "text" : "password"}
-                        value={formData.credentials.refresh_token}
-                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, refresh_token: e.target.value}})}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
-                        placeholder="1//0g..."
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase font-bold text-muted-foreground mb-1">Client Secret (optional)</label>
-                      <input
-                        type={editingSite ? "text" : "password"}
-                        value={formData.credentials.client_secret}
-                        onChange={e => setFormData({...formData, credentials: {...formData.credentials, client_secret: e.target.value}})}
-                        className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-sm font-mono"
-                        placeholder="GOCSPX-..."
-                      />
-                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-1">Found in Blogger dashboard → Settings, or in your blog post URLs.</p>
                   </div>
                 </>
              )}

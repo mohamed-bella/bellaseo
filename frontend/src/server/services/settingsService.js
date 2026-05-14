@@ -35,4 +35,9 @@ async function getSetting(key, defaultValue = null) {
   return all[key] || defaultValue;
 }
 
-module.exports = { getAllSettings, getSetting };
+function invalidateCache() {
+  settingsCache = null;
+  lastFetch = 0;
+}
+
+module.exports = { getAllSettings, getSetting, invalidateCache };
