@@ -95,10 +95,15 @@ async function _callGemini(userPrompt, systemPrompt, responseFormat, opts, confi
   if (!apiKey) throw new Error('[AI] Gemini API key is missing. Add it in Settings → AI Engine.');
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
   const res = await axios.post(url, {
-    contents: [{ parts: [{ text: fullPrompt }] }],
+    system_instruction: {
+      parts: [{ text: systemPrompt }]
+    },
+    contents: [{ 
+      role: 'user',
+      parts: [{ text: userPrompt }] 
+    }],
     generationConfig: {
       temperature:      opts.temperature ?? config?.temperature ?? 0.72,
       maxOutputTokens:  8192,
@@ -365,22 +370,20 @@ async function generateArticle(keyword, options = {}, onProgress = null) {
   const targetLength = options.target_length || options.targetLength || articleConf?.target_word_count || 3000;
   const numSections  = Math.max(4, Math.ceil(Number(targetLength) / 700));
 
-  const outlinePrompt = `You are building the structural blueprint for a ${targetLength}-word SEO article.
+  const outlineTask = `You are building the structural blueprint for a ${targetLength}-word SEO article.
 
-Based on the MASTER STRATEGY below, generate a JSON outline with EXACTLY ${numSections} sections.
+Based on the MASTER STRATEGY, generate a JSON outline with EXACTLY ${numSections} sections.
 
 Rules:
 - Return ONLY valid JSON: { "sections": [ { "title": "...", "description": "...", "target_word_count": 700 } ] }
 - Each section title must be unique, semantic, and match an H2 heading.
 - target_word_count per section should sum to approximately ${targetLength}.
-- NO introduction or conclusion sections — those are handled separately.
-
-MASTER STRATEGY:
-${masterPrompt}`;
+- NO introduction or conclusion sections — those are handled separately.`;
 
   let outline;
   try {
-    const outlineRaw = await callAI(outlinePrompt, 'You are a senior content architect.', 'json');
+    // Pass the full masterPrompt as the system message to trigger Prompt Caching and ensure total adherence.
+    const outlineRaw = await callAI(outlineTask, masterPrompt, 'json');
     const parsed     = JSON.parse(outlineRaw);
     // Validate and clamp
     if (Array.isArray(parsed?.sections) && parsed.sections.length > 0) {
@@ -408,7 +411,7 @@ ${masterPrompt}`;
 
   // Generate H1 intro first
   emit('Writing article introduction...');
-  const introPrompt = `Write a powerful HTML introduction for this article.
+  const introTask = `Write a powerful HTML introduction for this article.
 
 Article Topic: "${keyword.main_keyword}"
 
@@ -417,18 +420,15 @@ Rules:
 - Write 180-250 words for the body.
 - THE VERY FIRST SENTENCE of the first <p> MUST include the exact phrase "${keyword.main_keyword}". This is mandatory for RankMath SEO compliance.
 - CRITICAL: Dive straight into the core value. No fluffy preambles.
-- CRITICAL: Output raw HTML only. Do NOT use markdown blocks like \`\`\`html.
+- CRITICAL: Output raw HTML only. Do NOT use markdown blocks like \`\`\`html.`;
 
-STRATEGY CONTEXT:
-${masterPrompt.substring(0, 1500)}`;
-
-  const intro = await callAI(introPrompt, 'You are a senior SEO copywriter.', 'text', { maxTokens: 600 });
+  const intro = await callAI(introTask, masterPrompt, 'text', { maxTokens: 600 });
   fullContent += `\n${intro}\n`;
 
   for (const [i, section] of outline.sections.entries()) {
     emit(`Writing section ${i + 1}/${total}: "${section.title}"...`);
 
-    const sectionPrompt = `You are writing Section ${i + 1} of ${total} for a long-form article on "${keyword.main_keyword}".
+    const sectionTask = `You are writing Section ${i + 1} of ${total} for a long-form article on "${keyword.main_keyword}".
 
 SECTION TITLE: "${section.title}"
 GOAL: ${section.description}
@@ -447,12 +447,9 @@ Rules:
 - Include 1-2 external authority links (<a href="..."> to real websites) relevant to this section to satisfy RankMath outbound link check.
 - Internal links available (use 1-2 naturally): ${internalLinksStr}
 - CRITICAL: Output RAW HTML ONLY. Do NOT use markdown code blocks like \`\`\`html.
-- Write THE SECTION ONLY — no preamble, no commentary.
+- Write THE SECTION ONLY — no preamble, no commentary.`;
 
-STRATEGY CONTEXT (Follow tone, E-E-A-T rules, and facts):
-${masterPrompt.substring(0, 1500)}`;
-
-    const sectionContent = await callAI(sectionPrompt, 'You are a senior SEO copywriter.', 'text', { maxTokens: 2500 });
+    const sectionContent = await callAI(sectionTask, masterPrompt, 'text', { maxTokens: 2500 });
     fullContent += `\n<section id="section-${i + 1}">\n${sectionContent}\n</section>\n`;
     writtenTitles.push(section.title);
   }
@@ -468,7 +465,7 @@ ${masterPrompt.substring(0, 1500)}`;
     if (includeFaq)        closingParts.push('A COMPREHENSIVE FAQ section with 15 or more Q&As in HTML <details>/<summary> or <dl> format. Use FAQ Schema structure.');
     if (includeConclusion) closingParts.push('A CONCLUSION section with a "Key Takeaways" bullet list and a strong call-to-action.');
 
-    const closingPrompt = `You are finalising a long-form article about "${keyword.main_keyword}".
+    const closingTask = `You are finalising a long-form article about "${keyword.main_keyword}".
 
 Write ONLY these sections in clean HTML:
 ${closingParts.map((p, i) => `${i + 1}. ${p}`).join('\n')}
@@ -476,19 +473,16 @@ ${closingParts.map((p, i) => `${i + 1}. ${p}`).join('\n')}
 Base the content on these covered topics: ${writtenTitles.join(', ')}.
 Do NOT rewrite existing content. 
 CRITICAL: Output RAW HTML ONLY. Do NOT use markdown wrappers like \`\`\`html or duplicate any FAQ sections.
-Write directly, no preamble.
+Write directly, no preamble.`;
 
-STRATEGY CONTEXT (Follow CTA directives and tone):
-${masterPrompt.substring(0, 1500)}`;
-
-    const closing = await callAI(closingPrompt, 'You are a senior SEO editor.', 'text', { maxTokens: 3000 });
+    const closing = await callAI(closingTask, masterPrompt, 'text', { maxTokens: 3000 });
     fullContent += `\n<section id="conclusion-faq">\n${closing}\n</section>\n`;
   }
 
   // ── 8. Metadata Generation (SEPARATE, CONTROLLED JSON CALL) ─────────────
   emit('Generating SEO metadata...');
 
-  const metaPrompt = `You are an elite SEO copywriter. Generate metadata for an article. Return ONLY valid JSON — no explanation, no markdown.
+  const metaTask = `You are an elite SEO copywriter. Generate metadata for an article. Return ONLY valid JSON — no explanation, no markdown.
 
 FOCUS KEYWORD (must appear verbatim in title AND meta_description): "${keyword.main_keyword}"
 
@@ -511,7 +505,7 @@ Return ONLY this JSON:
 
   let metadata = { title: keyword.main_keyword, slug: keyword.main_keyword.toLowerCase().replace(/[^\w]+/g, '-'), meta_description: '', featured_image_query: keyword.main_keyword };
   try {
-    const metaRaw = await callAI(metaPrompt, 'You are an SEO metadata specialist. Always follow instructions exactly.', 'json', { maxTokens: 400 });
+    const metaRaw = await callAI(metaTask, masterPrompt, 'json', { maxTokens: 400 });
     const parsed  = JSON.parse(metaRaw);
     if (parsed?.title) metadata = { ...metadata, ...parsed };
   } catch (e) {
