@@ -11,75 +11,56 @@
  * ============================================================
  */
 
-'use strict';
+// ─── ABSOLUTE WRITING RULES ──────────────────────────────────────────────────
+// Hardcoded rules that apply to EVERY AI request to ensure human-grade quality.
+const ABSOLUTE_WRITING_RULES = `
+ABSOLUTE WRITING RULES — NON-NEGOTIABLE. APPLY TO EVERY WORD YOU WRITE.
+
+**BANNED WORDS AND PHRASES — never use any of these, ever:**
+hidden gem, breathtaking, magical, unforgettable, rich culture, vibrant, tapestry, nestled, bustling, seamlessly, game-changer, cutting-edge, leverage, delve, embark, journey (used metaphorically), unlock, unleash, elevate, foster, beacon, cornerstone, pivotal, paramount, robust, streamline, revolutionize, transformative, innovative, holistic, synergy, ecosystem, landscape (used metaphorically), realm, sphere, dynamic, impactful, actionable, scalable, sustainable (used vaguely).
+
+hit different, rewired my brain, bucket list, once in a lifetime, living rent-free, no notes, I'm still not over it, a masterclass in, deeply moving, truly inspiring, absolutely, certainly, of course, it goes without saying, needless to say, I cannot stress enough, I cannot emphasize enough, the fact of the matter is, at the end of the day, when it comes to, in terms of, it is what it is, think outside the box, move the needle, circle back, take it to the next level, at its core, in the realm of, stands as, serves as, remains as, is designed to, aims to provide, touch base, as an AI language model, in today's world, in today's fast-paced world.
+
+**BANNED SENTENCE PATTERNS:**
+- "It's not just a [noun], it's a [noun]." Kill this construction on sight. Rewrite the sentence completely.
+- Em dashes (—) used as pauses or asides. Replace with a period, a parenthesis, or a new sentence. 
+- Openers that define the topic: "Morocco is a country where...", "[Topic] is one of the most...", "When it comes to [topic]..."
+- Transition fillers at the start of paragraphs: Furthermore, Moreover, In addition, Additionally, Consequently, Nevertheless, Nonetheless, It is worth noting that, It is important to mention that.
+- Closing sentences that announce themselves: "In conclusion,", "To summarize,", "To wrap up,", "As we have seen,", "All in all,".
+- Overly clean four-sentence paragraphs with identical rhythm. Real writing has short sentences. Fragments. Then a longer one that earns its length.
+
+**THE TEST BEFORE YOU WRITE ANY SENTENCE:**
+Would a real experienced human actually say this, or does it sound like a content brief came to life? If it sounds like a content brief — rewrite it. Specificity is the only cure. Replace vague praise with a real detail. Replace a metaphor with a price, a place name, a time of day, a person's reaction.
+`.trim();
 
 // ─── DEFAULT MASTER TEMPLATE ──────────────────────────────────────────────────
-// This is the core engine instruction. It uses the user's specific rules:
-// "write clear, useful content for any niche based on the given topic and keywords."
+// This is the fallback used ONLY when no custom template is set at any level.
+// It is intentionally minimal to avoid fighting persona prompts defined in
+// campaign.prompt_template. Those will be used as the system identity instead.
 
-const DEFAULT_TEMPLATE = [
-  'Your job is to write clear, useful content for the niche "{{niche}}" based on the topic "{{keyword}}" and keywords "{{secondaryKeywords}}".',
-  '',
-  '# CONTENT RULES',
-  '- Use simple, clear English (Language: {{language}}).',
-  '- Keep paragraphs short (2–4 lines).',
-  '- Avoid hype, fake claims, or marketing exaggeration.',
-  '- Focus on real user intent (Intent: {{intent}}) and problems.',
-  '- Write like a human, not a robot.',
-  '',
-  '# STRUCTURE RULES',
-  'Always organize content like this:',
-  '1. Introduction',
-  '2. Problem / context',
-  '3. Solution or explanation',
-  '4. Key points or features (use list if needed)',
-  '5. {{faqDirective}}',
-  '6. {{conclusionDirective}}',
-  '',
-  '# SEO RULES (RANKMATH COMPLIANCE — CRITICAL)',
-  '- KEYWORD IN TITLE: The EXACT phrase "{{keyword}}" MUST appear in the <h1> title, preferably near the start.',
-  '- KEYWORD IN FIRST PARAGRAPH: The EXACT phrase "{{keyword}}" MUST appear within the FIRST 100 WORDS of the body content.',
-  '- KEYWORD IN H2/H3: At least 2 subheadings (<h2> or <h3>) must contain the exact phrase "{{keyword}}" or a very close variation.',
-  '- KEYWORD DENSITY: Use the exact phrase "{{keyword}}" at least once per 100 words. Target overall density of ~1%. Do NOT overstuff.',
-  '- USE SECONDARY KEYWORDS: Weave {{secondaryKeywords}} naturally into H2s, H3s, and body text.',
-  '- IMAGE ALT TEXT: Every <img> tag MUST have an alt attribute containing "{{keyword}}".',
-  '- OUTBOUND LINKS: Include 2-3 external authority links using <a href="..."> pointing to real, relevant websites.',
-  '- INTERNAL LINKS (if any): {{internalLinks}}',
-  '- Do NOT repeat keywords unnaturally or in back-to-back sentences.',
-  '- Write for humans first, SEO second.',
-  '',
-  '# HTML OUTPUT RULES (STRICT)',
-  '- Output ONLY pure HTML.',
-  '- Start with <h1> and end with </html>.',
-  '- DO NOT use markdown (no ```html).',
-  '- DO NOT include any explanations.',
-  '- Use ONLY these tags: <h1> <h2> <h3> <p> <ul> <li> <ol> <table> <tr> <td> <th> <a> <img> <figure> <figcaption> <strong> <em>',
-  '',
-  '# DESIGN CONSTRAINTS',
-  '- No CSS, no inline styles, no classes or IDs.',
-  '- Keep structure clean and readable.',
-  '',
-  '# OPTIONAL ELEMENTS',
-  '- If pricing is mentioned → use <table>',
-  '- If listing features → use <ul><li>',
-  '- If FAQ → use <h3> for each question and <p> for the answer',
-  '',
-  '# BEHAVIOR RULES',
-  '- Do not invent fake data.',
-  '- Do not use placeholders like "lorem ipsum".',
-  '- Do not repeat the same sentences.',
-  '- Do not go off-topic.',
-  '- Target word count: {{targetLength}}.',
-  '',
-  '# ADDITIONAL CONTEXT',
-  '- Author Profile: {{authorName}} - {{authorBio}}',
-  '- Target Audience: {{targetAudience}}',
-  '- Site Name: {{siteName}}',
-  '- Tone & Voice: {{tone}}',
-  '- External Links (if any): {{externalLinks}}',
-  '- Live Research Data: {{researchBlock}}',
-  '- Special Campaign Instructions: {{campaignDirectives}}',
-].join('\n');
+const DEFAULT_TEMPLATE = `
+You are {{authorName}}, an expert in {{niche}}.
+{{authorBio}}
+
+Write a comprehensive, human-sounding article about "{{keyword}}" for {{targetAudience}}.
+Language: {{language}}. Tone: {{tone}}. Target length: {{targetLength}} words.
+
+SEO requirements:
+- Include "{{keyword}}" in the H1 title and naturally throughout the body.
+- Weave in secondary keywords where they fit: {{secondaryKeywords}}.
+- Use at least two H2 or H3 subheadings that reference the topic.
+- Output clean HTML only — no markdown, no code fences.
+
+Structure: introduction with a hook, body sections with H2/H3 headings, {{faqDirective}}, {{conclusionDirective}}.
+
+Internal links to use naturally: {{internalLinks}}
+External authority sources to reference: {{externalLinks}}
+
+Live research context (use for facts and citations):
+{{researchBlock}}
+
+{{campaignDirectives}}
+`.trim();
 
 
 // ─── CONTEXT BUILDER ─────────────────────────────────────────────────────────
@@ -174,14 +155,22 @@ function interpolate(template, context) {
  * Template priority: site > campaign > global article_config > DEFAULT_TEMPLATE.
  */
 function compile(keyword, campaign, site, articleConf, options, researchBlock, internalLinksStr, externalLinksStr) {
+  // Priority: site > campaign.article_config > global articleConf > campaign.prompt_template (as full system identity) > DEFAULT_TEMPLATE
+  // NOTE: campaign.prompt_template (the "Master Project Instruction" the user types) is checked
+  // as a full master template — NOT as a footnote in campaignDirectives. This means if a campaign
+  // has a persona prompt set, it becomes the entire system identity, not a bullet point.
   const rawTemplate =
-    (site && site.master_prompt_template)                                            ||
-    (campaign && campaign.article_config && campaign.article_config.master_prompt_template) ||
-    (articleConf && articleConf.master_prompt_template)                              ||
+    (site && site.master_prompt_template)                                                    ||
+    (campaign && campaign.article_config && campaign.article_config.master_prompt_template)  ||
+    (articleConf && articleConf.master_prompt_template)                                      ||
+    (campaign && campaign.prompt_template)                                                    ||
     DEFAULT_TEMPLATE;
 
   const context = buildContext(keyword, campaign, site, articleConf, options, researchBlock, internalLinksStr, externalLinksStr);
-  return interpolate(rawTemplate, context);
+  const userTemplate = interpolate(rawTemplate, context);
+
+  // Prepend the Absolute Writing Rules to the final output so they are always at the top of the system prompt.
+  return `${ABSOLUTE_WRITING_RULES}\n\n${userTemplate}`;
 }
 
 module.exports = { compile, buildContext, interpolate, DEFAULT_TEMPLATE };

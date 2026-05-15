@@ -131,13 +131,16 @@ async function enrichMedia(content, mediaEnabled, focusKeyword = '') {
       .replace(/\[MAP_PLACEHOLDER:[^\]]*\]/gi, '');
   }
 
-  // 1. Images — alt text is ALWAYS the focus keyword for RankMath compliance
+  // 1. Images — alt text is descriptive (includes keyword) not just the raw keyword (Issue 5 fix)
   content = await _replacePlaceholders(content, /\[IMAGE_PLACEHOLDER:\s*(.*?)\]/gi, async (query) => {
     try {
       const img = await unsplashService.searchImage(query);
       if (!img) return '';
-      // focusKeyword takes priority; fall back to query only if keyword is empty
-      const altText = focusKeyword || img.alt || query;
+      // Build descriptive alt text: if the query already contains the keyword, use query as-is.
+      // Otherwise prepend "keyword - " so it's descriptive AND includes the keyword for RankMath.
+      const altText = focusKeyword && !query.toLowerCase().includes(focusKeyword.toLowerCase())
+        ? `${focusKeyword} - ${query}`
+        : (query || focusKeyword);
       return `\n<figure class="article-image-block" style="margin:2rem 0">\n  <img src="${img.url}" alt="${altText}" loading="lazy" style="width:100%;border-radius:8px;height:auto" />\n  <figcaption style="font-size:.8rem;text-align:center;color:#666;margin-top:.5rem">${img.credit}</figcaption>\n</figure>\n`;
     } catch { return ''; }
   });
@@ -191,13 +194,10 @@ function enforceKeywordAltText(content, focusKeyword) {
 }
 
 /**
- * Keyword Density Booster
- * Calculates current keyword density from the article HTML.
- * If it's below 0.9%, injects the focus keyword at the opening of eligible
- * <p> tags (spaced apart by at least 2 paragraphs) until target is reached.
- *
- * RankMath target: ~1% density.
- * Safe ceiling:     1.4% (avoids over-optimisation penalty).
+ * Keyword Density Reporter (read-only)
+ * Calculates and logs current keyword density — does NOT inject anything.
+ * The persona prompt is trusted to hit natural density.
+ * Broken sentence injection ("Morocco family tours The Atlas Mountains...") removed.
  */
 function boostKeywordDensity(content, focusKeyword) {
   if (!focusKeyword) return content;
@@ -205,53 +205,16 @@ function boostKeywordDensity(content, focusKeyword) {
   const kw      = focusKeyword.toLowerCase();
   const kwWords = kw.split(/\s+/).length;
 
-  // Strip HTML to count real words and keyword occurrences
   const plainText  = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const totalWords = plainText.split(/\s+/).length;
 
-  // Count exact (case-insensitive) keyword occurrences
-  const countOccurrences = (text) => {
-    const re = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    return (text.match(re) || []).length;
-  };
-
-  const currentCount   = countOccurrences(plainText);
+  const re = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  const currentCount   = (plainText.match(re) || []).length;
   const currentDensity = (currentCount * kwWords) / totalWords;
 
-  // Already at or above 0.9% — do nothing
-  if (currentDensity >= 0.009) {
-    console.log(`[density] ✅ Keyword density OK: ${(currentDensity * 100).toFixed(2)}% (${currentCount} occurrences)`);
-    return content;
-  }
+  console.log(`[density] Keyword "${focusKeyword}": ${(currentDensity * 100).toFixed(2)}% density (${currentCount} occurrences in ${totalWords} words).`);
 
-  // How many more injections do we need to reach 1%?
-  const targetCount = Math.ceil((0.01 * totalWords) / kwWords);
-  const needed      = Math.min(targetCount - currentCount, 12); // safety cap
-
-  console.log(`[density] ⚠️  Density ${(currentDensity * 100).toFixed(2)}% (${currentCount}/${targetCount} needed). Injecting ${needed} more.`);
-
-  // Find all <p> tag positions and inject keyword into eligible ones
-  // "Eligible" = paragraph doesn't already start within 2 paragraphs of a previous injection
-  let injected   = 0;
-  let lastInjIdx = -3; // allow injection from the 1st paragraph
-  let pIdx       = 0;
-
-  content = content.replace(/<p>((?!<\/p>).{30,})/g, (match, body, offset) => {
-    if (injected >= needed) return match;
-    pIdx++;
-
-    // Skip if too close to previous injection or already has keyword
-    if (pIdx - lastInjIdx < 3) return match;
-    if (body.toLowerCase().includes(kw)) { lastInjIdx = pIdx; return match; }
-
-    // Inject: "<p>FocusKeyword is an important topic. Original text..."
-    // We do a natural prepend rather than raw keyword stuffing
-    lastInjIdx = pIdx;
-    injected++;
-    return `<p>${focusKeyword} ${body}`;
-  });
-
-  console.log(`[density] ✅ Injected ${injected} keyword occurrences. New estimated density: ~${(((currentCount + injected) * kwWords / totalWords) * 100).toFixed(2)}%`);
+  // No injection — return content unchanged. Persona prompt handles density.
   return content;
 }
 
@@ -353,133 +316,49 @@ async function generateArticle(keyword, options = {}, onProgress = null) {
   emit('Building internal & external link map...');
 
   const internalLinks = await fetchInternalLinks(keyword, keyword.campaign_id);
-  const extLinkSource = options.external_links_list
-    ? options.external_links_list.split(',').map(u => ({ url: u.trim(), title: 'Authority Reference' }))
-    : linkingService.getExternalLinks(keyword.main_keyword);
+  
+  // Use real organic results from SERP research as authority links (Issue Fix)
+  const extLinkSource = (research && research.organic) 
+    ? research.organic.map(res => ({ url: res.link, title: res.title }))
+    : [];
 
-  const maxExt            = articleConf?.linking?.max_external_links || 4;
+  const maxExt            = articleConf?.linking?.max_external_links || 3;
   const internalLinksStr  = JSON.stringify(internalLinks);
   const externalLinksStr  = JSON.stringify(extLinkSource.slice(0, maxExt));
 
   // ── 4. Compile Master Prompt ─────────────────────────────────────────────
   const masterPrompt = promptEngine.compile(keyword, campaign, site, articleConf, options, researchBlock, internalLinksStr, externalLinksStr);
 
-  // ── 5. Generate Outline ──────────────────────────────────────────────────
-  emit('Generating structural blueprint (outline)...');
+  // ── 5. Generate Full Article Body (ONE-SHOT) ─────────────────────────────
+  emit('Generating full article content (one-shot)...');
 
   const targetLength = options.target_length || options.targetLength || articleConf?.target_word_count || 3000;
-  const numSections  = Math.max(4, Math.ceil(Number(targetLength) / 700));
+  
+  const articleTask = `Write a comprehensive, long-form SEO article about "${keyword.main_keyword}".
 
-  const outlineTask = `You are building the structural blueprint for a ${targetLength}-word SEO article.
-
-Based on the MASTER STRATEGY, generate a JSON outline with EXACTLY ${numSections} sections.
-
-Rules:
-- Return ONLY valid JSON: { "sections": [ { "title": "...", "description": "...", "target_word_count": 700 } ] }
-- Each section title must be unique, semantic, and match an H2 heading.
-- target_word_count per section should sum to approximately ${targetLength}.
-- NO introduction or conclusion sections — those are handled separately.`;
-
-  let outline;
-  try {
-    // Pass the full masterPrompt as the system message to trigger Prompt Caching and ensure total adherence.
-    const outlineRaw = await callAI(outlineTask, masterPrompt, 'json');
-    const parsed     = JSON.parse(outlineRaw);
-    // Validate and clamp
-    if (Array.isArray(parsed?.sections) && parsed.sections.length > 0) {
-      outline = { sections: parsed.sections.slice(0, 16) }; // cap at 16 sections
-    } else {
-      throw new Error('Invalid outline format');
-    }
-  } catch (e) {
-    console.warn('[AI Pipeline] Outline parse failed, using fallback:', e.message);
-    outline = {
-      sections: [
-        { title: 'Overview',                    description: 'High-level overview of the topic.',  target_word_count: 600 },
-        { title: 'Key Benefits & Features',     description: 'Deep dive into core benefits.',       target_word_count: 700 },
-        { title: 'How It Works',                description: 'Step-by-step explanation.',           target_word_count: 700 },
-        { title: 'Expert Tips & Best Practices',description: 'Actionable tips for readers.',        target_word_count: 700 },
-        { title: 'Common Mistakes to Avoid',    description: 'Pitfalls and how to sidestep them.', target_word_count: 600 },
-      ]
-    };
-  }
-
-  // ── 6. Iterative Section Generation ─────────────────────────────────────
-  const total       = outline.sections.length;
-  const writtenTitles = [];
-  let   fullContent = '';
-
-  // Generate H1 intro first
-  emit('Writing article introduction...');
-  const introTask = `Write a powerful HTML introduction for this article.
-
-Article Topic: "${keyword.main_keyword}"
+TARGET LENGTH: ${targetLength} words.
 
 Rules:
-- Use an <h1> tag for the title. The <h1> MUST contain the exact phrase "${keyword.main_keyword}" near the start.
-- Write 180-250 words for the body.
-- THE VERY FIRST SENTENCE of the first <p> MUST include the exact phrase "${keyword.main_keyword}". This is mandatory for RankMath SEO compliance.
-- CRITICAL: Dive straight into the core value. No fluffy preambles.
-- CRITICAL: Output raw HTML only. Do NOT use markdown blocks like \`\`\`html.`;
+- Start with an <h1> title containing "${keyword.main_keyword}".
+- Write a powerful introduction with a hook.
+- Use multiple <h2> and <h3> subheadings to organize the content.
+- Use rich HTML: <ul>, <ol>, <strong>, <em>, <table>, <blockquote> where appropriate.
+- Naturally weave in the focus keyword "${keyword.main_keyword}" and secondary keywords: ${Array.isArray(keyword.secondary_keywords) ? keyword.secondary_keywords.join(', ') : 'none'}.
+- Include 2-3 outbound links to authority websites.
+- INTERNAL LINKS: Naturally integrate these links into the text (1-2 max): ${internalLinksStr}.
+- If a visual would help, use [IMAGE_PLACEHOLDER: descriptive query] or [YOUTUBE_PLACEHOLDER: query].
+- Include a "Key Takeaways" or "Conclusion" section at the end.
+- If relevant, add a "Frequently Asked Questions" section using <h3> for questions and <p> for answers.
+- CRITICAL: Output RAW HTML ONLY. Do NOT use markdown code blocks or any preamble.`;
 
-  const intro = await callAI(introTask, masterPrompt, 'text', { maxTokens: 600 });
-  fullContent += `\n${intro}\n`;
+  // We use a high maxTokens to allow for the full 3000+ words in one go.
+  // Temperature 0.82 for the persona's voice.
+  const fullContent = await callAI(articleTask, masterPrompt, 'text', { 
+    maxTokens: 16000, 
+    temperature: 0.82 
+  });
 
-  for (const [i, section] of outline.sections.entries()) {
-    emit(`Writing section ${i + 1}/${total}: "${section.title}"...`);
-
-    const sectionTask = `You are writing Section ${i + 1} of ${total} for a long-form article on "${keyword.main_keyword}".
-
-SECTION TITLE: "${section.title}"
-GOAL: ${section.description}
-TARGET LENGTH: ${section.target_word_count} words
-
-Previously covered topics (DO NOT repeat): ${writtenTitles.join(', ') || 'None yet.'}
-
-Rules:
-- Use an <h2> tag for the section title. WHERE RELEVANT, include a variation of "${keyword.main_keyword}" inside the <h2>.
-- Use <h3> subheadings for sub-topics. At least ONE <h3> should contain "${keyword.main_keyword}" or closely related phrasing.
-- Use rich HTML: <ul>, <ol>, <strong>, <em>, <blockquote> where appropriate.
-- KEYWORD DENSITY: Naturally mention "${keyword.main_keyword}" at least once every 100 words (target ~1% density).
-- Naturally use these secondary keywords: ${Array.isArray(keyword.secondary_keywords) ? keyword.secondary_keywords.join(', ') : ''}
-- If adding an image (figure/img), the alt text MUST contain "${keyword.main_keyword}".
-- If a visual would help, add ONE [IMAGE_PLACEHOLDER: ${keyword.main_keyword} description] or [YOUTUBE_PLACEHOLDER: query] tag.
-- Include 1-2 external authority links (<a href="..."> to real websites) relevant to this section to satisfy RankMath outbound link check.
-- Internal links available (use 1-2 naturally): ${internalLinksStr}
-- CRITICAL: Output RAW HTML ONLY. Do NOT use markdown code blocks like \`\`\`html.
-- Write THE SECTION ONLY — no preamble, no commentary.`;
-
-    const sectionContent = await callAI(sectionTask, masterPrompt, 'text', { maxTokens: 2500 });
-    fullContent += `\n<section id="section-${i + 1}">\n${sectionContent}\n</section>\n`;
-    writtenTitles.push(section.title);
-  }
-
-  // ── 7. FAQ & Conclusion ──────────────────────────────────────────────────
-  const includeFaq        = options.include_faq        !== false;
-  const includeConclusion = options.include_conclusion !== false;
-
-  if (includeFaq || includeConclusion) {
-    emit('Generating FAQ & Conclusion...');
-
-    const closingParts = [];
-    if (includeFaq)        closingParts.push('A COMPREHENSIVE FAQ section with 15 or more Q&As in HTML <details>/<summary> or <dl> format. Use FAQ Schema structure.');
-    if (includeConclusion) closingParts.push('A CONCLUSION section with a "Key Takeaways" bullet list and a strong call-to-action.');
-
-    const closingTask = `You are finalising a long-form article about "${keyword.main_keyword}".
-
-Write ONLY these sections in clean HTML:
-${closingParts.map((p, i) => `${i + 1}. ${p}`).join('\n')}
-
-Base the content on these covered topics: ${writtenTitles.join(', ')}.
-Do NOT rewrite existing content. 
-CRITICAL: Output RAW HTML ONLY. Do NOT use markdown wrappers like \`\`\`html or duplicate any FAQ sections.
-Write directly, no preamble.`;
-
-    const closing = await callAI(closingTask, masterPrompt, 'text', { maxTokens: 3000 });
-    fullContent += `\n<section id="conclusion-faq">\n${closing}\n</section>\n`;
-  }
-
-  // ── 8. Metadata Generation (SEPARATE, CONTROLLED JSON CALL) ─────────────
+  // ── 8. Metadata Generation (SEPARATE call) ─────────────────────────────
   emit('Generating SEO metadata...');
 
   const metaTask = `You are an elite SEO copywriter. Generate metadata for an article. Return ONLY valid JSON — no explanation, no markdown.
