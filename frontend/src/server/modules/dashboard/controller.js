@@ -52,20 +52,30 @@ const stats = async (req, res, next) => {
 
 const projectStatus = async (req, res, next) => {
   try {
-    const [campaigns, keywords, workflows, articles] = await Promise.all([
-      supabase.from('campaigns').select('*'),
+    const [campaignsRes, keywordsRes, workflowsRes, articlesRes] = await Promise.all([
+      supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
       supabase.from('keywords').select('id, campaign_id, status'),
       supabase.from('workflows').select('id, campaign_id, status, type').not('status', 'in', '("completed","failed","published")'),
       supabase.from('articles').select('keyword_id, status').eq('status', 'published')
     ]);
 
-    if (campaigns.error) throw campaigns.error;
+    if (campaignsRes.error) {
+      console.error('[Dashboard] Campaigns fetch error:', campaignsRes.error);
+      throw campaignsRes.error;
+    }
 
-    const results = campaigns.data.map(campaign => {
-      const campKeywords = (keywords.data || []).filter(k => k.campaign_id === campaign.id);
-      const campWorkflows = (workflows.data || []).filter(w => w.campaign_id === campaign.id);
-      const keywordIds = campKeywords.map(k => k.id);
-      const campPublished = (articles.data || []).filter(a => keywordIds.includes(a.keyword_id)).length;
+    const campaigns = campaignsRes.data || [];
+    const keywords = keywordsRes.data || [];
+    const workflows = workflowsRes.data || [];
+    const articles = articlesRes.data || [];
+
+    console.log(`[Dashboard] Status report: ${campaigns.length} projects, ${keywords.length} keywords, ${workflows.length} workflows`);
+
+    const results = campaigns.map(campaign => {
+      const campKeywords = keywords.filter(k => k.campaign_id === campaign.id);
+      const campWorkflows = workflows.filter(w => w.campaign_id === campaign.id);
+      const campArticles = articles.filter(a => campKeywords.some(k => k.id === a.keyword_id));
+      const campPublished = campArticles.length;
 
       const pending = campKeywords.filter(k => k.status === 'pending').length;
       const completed = campKeywords.filter(k => k.status === 'done').length;

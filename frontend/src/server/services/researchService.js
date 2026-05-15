@@ -161,31 +161,8 @@ function buildResearchBlock(research) {
  * Returns { passed: bool, flags: string[] }
  */
 async function factCheckArticle(articleContent, research, aiGenerateFn) {
-  if (!research || !research.organic.length) return { passed: true, flags: [] };
-
-  try {
-    const snippets = research.organic.map((r) => r.snippet).join('\n');
-    const prompt = `You are a strict fact-checker. Review the following article excerpt against the provided source snippets. 
-List any factual claims in the article that CANNOT be verified or CONTRADICT the sources. 
-Be brief. If no issues found, reply with exactly: "PASS"
-
-SOURCE SNIPPETS:
-${snippets}
-
-ARTICLE EXCERPT (first 2000 chars):
-${articleContent.substring(0, 2000)}
-
-FACT-CHECK RESULT:`;
-
-    const result = await aiGenerateFn(prompt);
-    const isPassed = result?.trim().startsWith('PASS');
-    const flags = isPassed ? [] : [result.trim()];
-    console.log(`[research] Fact-check result: ${isPassed ? '✅ PASS' : '⚠️ FLAGS FOUND'}`);
-    return { passed: isPassed, flags };
-  } catch (err) {
-    console.warn('[research] Fact-check pass failed (non-fatal):', err.message);
-    return { passed: true, flags: [] };
-  }
+  // FEATURE DEACTIVATED: User requested to stop non-core AI requests.
+  return { passed: true, flags: [] };
 }
 
 module.exports = { searchKeyword, buildResearchBlock, factCheckArticle };

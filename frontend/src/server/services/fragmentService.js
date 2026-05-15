@@ -18,46 +18,9 @@ const env = require('../config/env');
  * @returns {Object} { linkedin, twitter, reddit } or null on failure
  */
 async function generateFragments(article) {
-  try {
-    const config = await settingsService.getSetting('ai_config');
-    const keys = await settingsService.getSetting('api_keys');
-    const provider = config?.provider || env.AI_PROVIDER;
-
-    console.log(`[fragments] Generating cross-platform fragments for article: "${article.title}"`);
-
-    const prompt = buildFragmentPrompt(article);
-
-    let rawText;
-    if (provider === 'gemini') {
-      const key = keys?.gemini || env.GEMINI_API_KEY;
-      if (!key) throw new Error('Gemini API key missing');
-      const model = config?.gemini_model || env.GEMINI_MODEL;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-      const resp = await axios.post(url, {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.75, maxOutputTokens: 2000 },
-      });
-      rawText = resp.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    } else {
-      const key = keys?.openai || env.OPENAI_API_KEY;
-      if (!key) throw new Error('OpenAI API key missing');
-      const openai = new OpenAI({ apiKey: key });
-      const resp = await openai.chat.completions.create({
-        model: 'gpt-4o-mini', // Use faster/cheaper model for fragments
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.75,
-        max_tokens: 2000,
-      });
-      rawText = resp.choices[0].message.content;
-    }
-
-    const fragments = parseFragments(rawText);
-    console.log(`[fragments] ✅ Fragments generated for: "${article.title}"`);
-    return fragments;
-  } catch (err) {
-    console.error(`[fragments] Failed to generate fragments for "${article.title}":`, err.message);
-    return null;
-  }
+  // FEATURE DEACTIVATED: User requested to stop non-core AI requests to save API budget.
+  console.log(`[fragments] Skipping fragment generation for: "${article.title}" (Feature Deactivated)`);
+  return null;
 }
 
 /**

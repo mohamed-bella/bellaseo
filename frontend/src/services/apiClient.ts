@@ -2,10 +2,21 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { getCached, setCached } from '@/lib/apiCache';
 
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    // If we're in the browser and have a relative /api, make it absolute to the current origin
+    if (process.env.NEXT_PUBLIC_API_URL === '/api') {
+      return `${window.location.origin}/api`;
+    }
+    return process.env.NEXT_PUBLIC_API_URL || `${window.location.origin}/api`;
+  }
+  // Server-side fallback (e.g. for SSR if used)
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+};
+
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: getBaseURL(),
   headers: { 'Content-Type': 'application/json' },
-  // Abort requests that hang longer than 15s
   timeout: 15000,
 });
 
@@ -27,7 +38,7 @@ apiClient.interceptors.response.use((response) => {
     setCached(key, response.data);
   }
   return response;
-}, (error) => {
+}, async (error) => {
   if (error.response?.status === 401) {
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !isRedirecting) {
       isRedirecting = true;

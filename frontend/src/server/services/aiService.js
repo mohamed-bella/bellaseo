@@ -279,23 +279,13 @@ async function fetchInternalLinks(keyword, campaignId) {
       .eq('keywords.campaign_id', campaignId)
       .eq('status', 'published')
       .not('published_url', 'is', null)
-      .limit(12);
+      .limit(5); // Just take the last 5 instead of asking AI to pick
 
     if (!articles || articles.length === 0) return [];
 
-    // Ask the AI to pick the most relevant 3-5
-    const list    = articles.map((a, i) => `${i + 1}. ${a.title}`).join('\n');
-    const pickRaw = await callAI(
-      `Select the 3 to 5 most relevant articles for internal linking to a new article about "${keyword.main_keyword}":\n\n${list}\n\nReturn ONLY the numbers, comma-separated. Example: 1, 3, 5`,
-      'You are an internal linking strategist.',
-      'text',
-      { model: 'gpt-4o-mini', maxTokens: 60 }
-    );
-
-    const indices = pickRaw.match(/\d+/g)?.map(n => parseInt(n) - 1) || [];
-    return articles
-      .filter((_, i) => indices.includes(i))
-      .map(a => ({ url: a.published_url, title: a.title }));
+    // FEATURE DEACTIVATED: User requested to stop non-core AI requests.
+    // Returning first few matches instead of AI-selected ones.
+    return articles.map(a => ({ url: a.published_url, title: a.title }));
   } catch {
     return [];
   }

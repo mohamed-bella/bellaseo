@@ -145,46 +145,9 @@ async function run(io) {
  * Generate an "Updated" content section using the AI.
  */
 async function generateUpdateSection(article, research) {
-  try {
-    const config = await settingsService.getSetting('ai_config');
-    const keys = await settingsService.getSetting('api_keys');
-    const provider = config?.provider || env.AI_PROVIDER;
-
-    const todayYear = new Date().getFullYear();
-    const srcSummary = research.organic.slice(0, 3).map((r) => `- ${r.title}: ${r.snippet}`).join('\n');
-    const prompt = `You are a senior content editor. Below is the title and some new ${todayYear} research data about this topic. 
-Write a concise HTML "Update" section (2-4 short paragraphs, using <p> tags) that adds value to the original article by incorporating the new data. 
-Start with: "<h3>What's New in ${todayYear}</h3>"
-Be specific. Cite the new sources inline. Do NOT rewrite the whole article. 
-
-ARTICLE TITLE: ${article.title}
-
-NEW RESEARCH DATA:
-${srcSummary}
-
-Write ONLY the HTML update section, nothing else:`;
-
-    if (provider === 'gemini') {
-      const key = keys?.gemini || env.GEMINI_API_KEY;
-      if (!key) return null;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-      const resp = await axios.post(url, { contents: [{ parts: [{ text: prompt }] }] });
-      return resp.data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    } else {
-      const key = keys?.openai || env.OPENAI_API_KEY;
-      if (!key) return null;
-      const openai = new OpenAI({ apiKey: key });
-      const resp = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 600,
-      });
-      return resp.choices[0].message.content;
-    }
-  } catch (err) {
-    console.warn('[refreshWorker] Update section generation failed:', err.message);
-    return null;
-  }
+  // FEATURE DEACTIVATED: User requested to stop non-core AI requests.
+  console.log(`[refresh] Skipping AI update section for: "${article.title}" (Feature Deactivated)`);
+  return null;
 }
 
 /**
